@@ -3,6 +3,7 @@ const cors = require('cors')
 require('dotenv').config()
 const { createClient } = require('@supabase/supabase-js')
 const authRoutes = require('./routes/authRoutes')
+const authMiddleware = require('./middleware/authMiddleware')
 
 const app = express()
 const PORT = process.env.PORT || 3001
