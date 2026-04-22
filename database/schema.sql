@@ -14,3 +14,12 @@ CREATE TABLE sessions (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     expires_at TIMESTAMPTZ NOT NULL
 );
+-- Enable RLS on both tables
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+-- Customers can only read their own row
+CREATE POLICY "customers_select_own" ON customers FOR
+SELECT USING (id = auth.uid());
+-- Sessions can only be read by the owner
+CREATE POLICY "sessions_select_own" ON sessions FOR
+SELECT USING (customer_id = auth.uid());
