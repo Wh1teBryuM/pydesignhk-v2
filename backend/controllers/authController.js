@@ -41,4 +41,44 @@ const registerCustomer = async (req, res) => {
   }
 }
 
-module.exports = { registerCustomer }
+const loginCustomer = async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' })
+    }
+
+    const { data: customer, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('email', email)
+      .single()
+
+    if (error || !customer) {
+      return res.status(401).json({ error: 'Invalid email or password' })
+    }
+
+    const passwordMatch = await bcrypt.compare(password, customer.password_hash)
+
+    if (!passwordMatch) {
+      return res.status(401).json({ error: 'Invalid email or password' })
+    }
+
+    const token = uuidv4()
+    const expires_at = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+    await supabase.from('sessions').insert({
+      customer_id: customer.id,
+      token,
+      expires_at
+    })
+
+    res.json({ token, customer: { id: customer.id, full_name: customer.full_name, email: customer.email } })
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
+
+module.exports = { registerCustomer, loginCustomer }
