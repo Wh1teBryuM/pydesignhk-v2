@@ -229,6 +229,7 @@ const styles = {
   main: {
     display: "flex",
     flex: 1,
+    minHeight: "calc(100vh - 64px)",
   },
   leftPanel: {
     flex: 1,
@@ -237,7 +238,6 @@ const styles = {
     display: "flex",
     alignItems: "flex-end",
     padding: "48px",
-    minHeight: "calc(100vh - 64px)",
     backgroundImage:
       "url('https://images.unsplash.com/photo-1600210492493-0946911123ea?w=800&q=80')",
     backgroundSize: "cover",
@@ -270,6 +270,7 @@ const styles = {
   },
   rightPanel: {
     width: "520px",
+    minHeight: "calc(100vh - 64px)",
     background: BG_PANEL,
     display: "flex",
     flexDirection: "column",
