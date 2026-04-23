@@ -3,7 +3,14 @@ import { useNavigate } from "react-router-dom"
 
 const GOLD = "#D4A017"
 const BORDER = "rgba(212,160,23,0.2)"
-const NAV_LINKS = ["Home", "Services", "Cost Estimator", "Track Project"]
+const TEXT_DIM = "rgba(255,255,255,0.65)"
+
+const NAV_LINKS = [
+  { label: "Home", path: "/" },
+  { label: "Services", path: "#" },
+  { label: "Cost Estimator", path: "/quote" },
+  { label: "Track Project", path: "#" },
+]
 
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -31,30 +38,45 @@ export default function Navbar() {
   }
 
   return (
-  <nav style={styles.navbar}>
-    <div onClick={() => navigate("/")} style={{ ...styles.navLogo, cursor: "pointer" }}>
-      <img
-        src="/logo.png"
-        alt="PYDesignHK"
-        style={{ height: "40px", width: "40px", marginRight: "10px", objectFit: "contain" }}
-      />
-      <span style={styles.navLogoText}>PYDesignHK</span>
-    </div>
-    <div style={styles.navLinks}>
-      {NAV_LINKS.map((link) => {
-        const href = link === "Home" ? "/" : "#"
-        return (
-          <a key={link} href={href} style={styles.navLink}>
-            {link}
+    <nav style={styles.navbar}>
+      <div onClick={() => navigate("/")} style={{ ...styles.navLogo, cursor: "pointer" }}>
+        <img
+          src="/logo.png"
+          alt="PYDesignHK"
+          style={{ height: "40px", width: "40px", marginRight: "10px", objectFit: "contain" }}
+        />
+        <span style={styles.navLogoText}>PYDesignHK</span>
+      </div>
+      <div style={styles.navLinks}>
+        {NAV_LINKS.map((link) => (
+          <a
+            key={link.label}
+            href={link.path}
+            style={{
+              ...styles.navLink,
+              color: link.label === "Cost Estimator" ? GOLD : TEXT_DIM,
+              borderBottom: link.label === "Cost Estimator" ? `1px solid ${GOLD}` : "none",
+              paddingBottom: link.label === "Cost Estimator" ? "2px" : "0",
+            }}
+            onClick={(e) => {
+              if (link.path !== "#") {
+                e.preventDefault()
+                navigate(link.path)
+              }
+            }}
+          >
+            {link.label}
           </a>
-        )
-      })}
-    </div>
-    <button onClick={handleAuthBtn} style={isLoggedIn ? styles.navLogoutBtn : styles.navLoginBtn}>
-      {isLoggedIn ? "LOG OUT" : "LOGIN"}
-    </button>
-  </nav>
-)
+        ))}
+      </div>
+      <button
+        onClick={handleAuthBtn}
+        style={isLoggedIn ? styles.navLogoutBtn : styles.navLoginBtn}
+      >
+        {isLoggedIn ? "LOG OUT" : "LOGIN"}
+      </button>
+    </nav>
+  )
 }
 
 const styles = {
@@ -83,12 +105,13 @@ const styles = {
   navLinks: {
     display: "flex",
     gap: "32px",
+    alignItems: "center",
   },
   navLink: {
     fontSize: "13px",
     letterSpacing: "0.08em",
-    color: "rgba(255,255,255,0.65)",
     textDecoration: "none",
+    transition: "color 0.15s ease",
   },
   navLoginBtn: {
     fontSize: "12px",
@@ -103,19 +126,17 @@ const styles = {
     cursor: "pointer",
     fontWeight: "600",
   },
-
   navLogoutBtn: {
-  fontSize: "12px",
-  fontWeight: "800",
-  letterSpacing: "0.12em",
-  color: "#000",
-  background: GOLD,
-  border: "none",
-  paddingTop: "15px",
-  paddingBottom: "15px",
-  paddingRight: "25px",  // ← adjust as needed
-  paddingLeft: "25px",
-  cursor: "pointer",
-  fontWeight: "600",
-}
+    fontSize: "12px",
+    letterSpacing: "0.12em",
+    color: "#000",
+    background: GOLD,
+    border: "none",
+    paddingTop: "15px",
+    paddingBottom: "15px",
+    paddingRight: "25px",
+    paddingLeft: "25px",
+    cursor: "pointer",
+    fontWeight: "600",
+  },
 }

@@ -42,7 +42,7 @@ export default function HomePage() {
             on premium material selection and structural requirements.
         </p>
         </div>
-        <a href="#" style={styles.featureLink}>CALCULATE YOUR VISION →</a>
+        <a href="/quote" style={styles.featureLink}>CALCULATE YOUR VISION →</a>
     </div>
 
     <div style={styles.featureDivider} />
