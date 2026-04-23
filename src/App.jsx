@@ -1,28 +1,12 @@
-import { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import Login from './pages/Login'
 
-function App() {
-  const [status, setStatus] = useState('Checking connection...')
-
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const res = await fetch('http://localhost:3001/test')
-        const data = await res.json()
-        setStatus(data.message)
-      } catch (error) {
-        setStatus('Backend not reachable')
-      }
-    }
-
-    checkBackend()
-  }, [])
-
+export default function App() {
   return (
-    <div>
-      <h1>pydesignhk</h1>
-      <p>Backend status: {status}</p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
-
-export default App
