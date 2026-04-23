@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar"
 
 const NAV_LINKS = ["Home", "Services", "Cost Estimator", "Track Project"];
 
@@ -43,22 +44,7 @@ export default function RegisterPage() {
 
   return (
     <div style={styles.root}>
-      {/* Navbar */}
-      <nav style={styles.navbar}>
-        <div style={styles.navLogo}>
-          <span style={styles.navLogoText}>PYDesignHK</span>
-        </div>
-        <div style={styles.navLinks}>
-          {NAV_LINKS.map((link) => (
-            <a key={link} href="#" style={styles.navLink}>
-              {link}
-            </a>
-          ))}
-        </div>
-        <a href="/login" style={styles.navLoginBtn}>
-          LOGIN
-        </a>
-      </nav>
+      <Navbar />
 
       {/* Main */}
       <div style={styles.main}>

@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import Navbar from "../components/Navbar"
 
 const NAV_LINKS = ["Home", "Services", "Cost Estimator", "Track Project"];
 
@@ -7,27 +8,7 @@ export default function HomePage() {
 
   return (
     <div style={styles.root}>
-      {/* Navbar */}
-    <nav style={styles.navbar}>
-    <div style={styles.navLogo}>
-        <img
-        src="/logo.png"
-        alt="PYDesignHK"
-        style={{ height: "40px", width: "40px", marginRight: "10px", objectFit: "contain" }}
-        />
-        <span style={styles.navLogoText}>PYDesignHK</span>
-    </div>
-    <div style={styles.navLinks}>
-        {NAV_LINKS.map((link) => (
-        <a key={link} href="#" style={styles.navLink}>
-            {link}
-        </a>
-        ))}
-    </div>
-    <a href="/login" style={styles.navLoginBtn}>
-        LOGIN
-    </a>
-    </nav>
+      <Navbar />
 
       {/* Section 1 — Hero */}
       <section style={styles.hero}>
