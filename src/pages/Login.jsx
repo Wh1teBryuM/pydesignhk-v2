@@ -232,7 +232,7 @@ const styles = {
     minHeight: "calc(100vh - 64px)",
   },
   leftPanel: {
-    flex: 1,
+    flex: '0 0 45%',
     background: `linear-gradient(135deg, #0a0a0a 0%, #1a1510 100%)`,
     position: "relative",
     display: "flex",
@@ -269,7 +269,7 @@ const styles = {
     margin: 0,
   },
   rightPanel: {
-    width: "520px",
+    flex: 1,
     minHeight: "calc(100vh - 64px)",
     background: BG_PANEL,
     display: "flex",
