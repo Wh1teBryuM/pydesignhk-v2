@@ -1,8 +1,6 @@
 import { useState } from "react";
 import Navbar from "../components/Navbar"
 
-const NAV_LINKS = ["Home", "Services", "Cost Estimator", "Track Project"];
-
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +19,7 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
+      console.log("Login response:", data);
       if (!res.ok) {
         setError(data.error || "Login failed");
       } else {
@@ -179,50 +178,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
   },
-  navbar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 48px",
-    height: "64px",
-    borderBottom: `1px solid ${BORDER}`,
-    background: "rgba(10,10,10,0.95)",
-    position: "sticky",
-    top: 0,
-    zIndex: 100,
-  },
-  navLogo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-  },
-  navLogoText: {
-    color: GOLD,
-    fontStyle: "italic",
-    fontSize: "17px",
-    letterSpacing: "0.04em",
-    fontFamily: "Georgia, serif",
-  },
-  navLinks: {
-    display: "flex",
-    gap: "36px",
-  },
-  navLink: {
-    color: TEXT_DIM,
-    textDecoration: "none",
-    fontSize: "13px",
-    letterSpacing: "0.08em",
-    transition: "color 0.2s",
-  },
-  navLoginBtn: {
-    border: `1px solid ${GOLD}`,
-    color: GOLD,
-    padding: "7px 22px",
-    fontSize: "12px",
-    letterSpacing: "0.12em",
-    textDecoration: "none",
-    transition: "background 0.2s",
-  },
+
   main: {
     display: "flex",
     flex: 1,
