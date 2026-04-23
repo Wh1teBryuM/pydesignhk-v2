@@ -20,27 +20,27 @@ const HK_DISTRICTS = [
 const PRIORITY_PROFILES = [
   {
     id: "look_good_control_cost",
-    zh: "外觀為主，控制預算",
-    en: "Look good, control cost",
-    desc: "Aesthetics matter, but staying within budget is the priority.",
-  },
-  {
-    id: "quality_first",
-    zh: "質量為先，不計外觀",
-    en: "Quality first, aesthetics secondary",
-    desc: "Material durability and build quality over visual impact.",
-  },
-  {
-    id: "full_premium",
-    zh: "全面升級，不設上限",
-    en: "Full premium, no compromise",
-    desc: "Budget is not the constraint. Everything at its best.",
+    zh: "精緻外觀，控制預算",
+    en: "Beautiful on a budget",
+    desc: "Visible surfaces premium, hidden works standard.",
   },
   {
     id: "practical_functional",
-    zh: "實用就好，合理價錢",
-    en: "Practical and functional",
-    desc: "Done properly at a reasonable cost. No excess.",
+    zh: "實用耐用，價錢合理",
+    en: "Built to last, not to impress",
+    desc: "Durability and function over aesthetics. Budget stays controlled.",
+  },
+  {
+    id: "full_premium",
+    zh: "全面精緻，不設上限",
+    en: "Full premium, no compromise",
+    desc: "No compromise anywhere. Premium throughout.",
+  },
+  {
+    id: "quality_first",
+    zh: "質量至上，功能優先",
+    en: "Quality and function first",
+    desc: "Best materials and systems. Design follows structure.",
   },
 ];
 
@@ -89,6 +89,15 @@ export default function Quote() {
     bathrooms: 0,
     kitchens: 0,
     livingRooms: 0,
+    estateName: "",
+    block: "",
+    floor: "",
+    flat: "",
+    street: "",
+    liftAccess: "",
+    hasStairs: null,
+    hasParking: null,
+    siteRemarks: "",
   });
 
   const carried = preStyle || preBudget || preSize;
@@ -99,7 +108,15 @@ export default function Quote() {
     step1.district &&
     step1.buildingAge &&
     step1.sqft > 0 &&
-    (step1.bedrooms + step1.bathrooms + step1.kitchens + step1.livingRooms) > 0;
+    (step1.bedrooms + step1.bathrooms + step1.kitchens + step1.livingRooms) > 0 &&
+    step1.estateName.trim() &&
+    step1.block.trim() &&
+    step1.floor.trim() &&
+    step1.flat.trim() &&
+    step1.street.trim() &&
+    step1.liftAccess &&
+    step1.hasStairs !== null &&
+    step1.hasParking !== null;
 
   function Stepper({ field, value, onChange }) {
     return (
@@ -316,6 +333,129 @@ export default function Quote() {
           </div>
         </div>
 
+        <div style={styles.divider} />
+
+        {/* Section C — Property Address */}
+        <div style={styles.section}>
+          <div style={styles.sectionLabel}>03</div>
+          <div style={styles.sectionBody}>
+            <h2 style={styles.sectionTitle}>Property Address</h2>
+            <p style={styles.sectionSub}>Required for the owner to prepare for the site visit.</p>
+
+            <div style={styles.addressGrid}>
+              {[
+                { label: "ESTATE / BUILDING NAME", key: "estateName", placeholder: "e.g. Laguna City, Metro Harbour Plaza", full: true },
+                { label: "STREET", key: "street", placeholder: "e.g. 8 Laguna Street", full: true },
+                { label: "BLOCK", key: "block", placeholder: "e.g. Block A" },
+                { label: "FLOOR", key: "floor", placeholder: "e.g. 12" },
+                { label: "FLAT", key: "flat", placeholder: "e.g. 3B" },
+              ].map(({ label, key, placeholder, full }) => (
+                <div key={key} style={{ ...styles.fieldGroup, gridColumn: full ? "1 / -1" : "auto" }}>
+                  <label style={styles.fieldLabel}>{label}</label>
+                  <input
+                    style={styles.textInput}
+                    type="text"
+                    placeholder={placeholder}
+                    value={step1[key]}
+                    onChange={(e) => setStep1({ ...step1, [key]: e.target.value })}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div style={styles.divider} />
+
+        {/* Section D — Site Conditions */}
+        <div style={styles.section}>
+          <div style={styles.sectionLabel}>04</div>
+          <div style={styles.sectionBody}>
+            <h2 style={styles.sectionTitle}>Site Conditions</h2>
+            <p style={styles.sectionSub}>These affect labour and logistics costs.</p>
+
+            {/* Lift Access */}
+            <div style={styles.fieldGroup}>
+              <label style={styles.fieldLabel}>LIFT ACCESS</label>
+              <div style={styles.btnGroup}>
+                {[
+                  { id: "direct", label: "Direct lift to apartment" },
+                  { id: "change_at_podium", label: "Change lift at podium" },
+                  { id: "no_lift", label: "No lift" },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    style={{
+                      ...styles.btnGroupItem,
+                      border: step1.liftAccess === opt.id
+                        ? `1.5px solid ${GOLD}`
+                        : "1.5px solid rgba(255,255,255,0.1)",
+                      color: step1.liftAccess === opt.id ? GOLD : TEXT_DIM,
+                      background: step1.liftAccess === opt.id
+                        ? "rgba(212,160,23,0.06)"
+                        : "transparent",
+                    }}
+                    onClick={() => setStep1({ ...step1, liftAccess: opt.id })}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Stairs + Parking toggles */}
+            <div style={styles.toggleRow}>
+              {[
+                { key: "hasStairs", label: "STAIRS", desc: "Steps involved in access" },
+                { key: "hasParking", label: "PARKING AVAILABLE", desc: "On-site parking for delivery" },
+              ].map(({ key, label, desc }) => (
+                <div key={key} style={styles.toggleCard}>
+                  <div>
+                    <p style={styles.toggleLabel}>{label}</p>
+                    <p style={styles.toggleDesc}>{desc}</p>
+                  </div>
+                  <div style={styles.toggleBtns}>
+                    <button
+                      type="button"
+                      style={{
+                        ...styles.toggleBtn,
+                        background: step1[key] === true ? GOLD : "transparent",
+                        color: step1[key] === true ? "#000" : TEXT_DIM,
+                        border: step1[key] === true ? `1px solid ${GOLD}` : "1px solid rgba(255,255,255,0.1)",
+                      }}
+                      onClick={() => setStep1({ ...step1, [key]: true })}
+                    >Yes</button>
+                    <button
+                      type="button"
+                      style={{
+                        ...styles.toggleBtn,
+                        background: step1[key] === false ? "rgba(255,255,255,0.08)" : "transparent",
+                        color: step1[key] === false ? "#fff" : TEXT_DIM,
+                        border: step1[key] === false ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.1)",
+                      }}
+                      onClick={() => setStep1({ ...step1, [key]: false })}
+                    >No</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Site Remarks */}
+            <div style={styles.fieldGroup}>
+              <label style={styles.fieldLabel}>SITE REMARKS <span style={{ color: TEXT_MUTED, fontWeight: "400" }}>(optional)</span></label>
+              <textarea
+                style={styles.textarea}
+                placeholder="Narrow corridors, low ceiling, existing defects, or anything else the team should know before visiting."
+                value={step1.siteRemarks}
+                onChange={(e) => setStep1({ ...step1, siteRemarks: e.target.value })}
+                rows={3}
+              />
+            </div>
+
+          </div>
+        </div>
+
         {/* Navigation */}
         <div style={styles.navRow}>
           <button style={styles.backBtn} onClick={() => navigate("/")} type="button">
@@ -446,7 +586,7 @@ const styles = {
     gap: "48px",
   },
   sectionLabel: {
-    fontSize: "11px",
+    fontSize: "25px",
     letterSpacing: "0.2em",
     color: "rgba(212,160,23,0.4)",
     fontWeight: "600",
@@ -636,6 +776,81 @@ const styles = {
     fontFamily: "inherit",
     lineHeight: 1,
   },
+  // Address grid
+  addressGrid: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "0 32px",
+  },
+
+  // Text input
+  textInput: {
+    background: "#141414",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#fff",
+    padding: "12px 16px",
+    fontSize: "14px",
+    fontFamily: "inherit",
+    width: "100%",
+    outline: "none",
+    boxSizing: "border-box",
+  },
+
+  // Textarea
+  textarea: {
+    background: "#141414",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#fff",
+    padding: "12px 16px",
+    fontSize: "14px",
+    fontFamily: "inherit",
+    width: "100%",
+    outline: "none",
+    resize: "vertical",
+    lineHeight: 1.6,
+    boxSizing: "border-box",
+  },
+
+  // Toggle row
+  toggleRow: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "16px",
+    marginBottom: "36px",
+  },
+  toggleCard: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "20px 20px",
+    background: "#141414",
+    border: "1px solid rgba(255,255,255,0.06)",
+    gap: "16px",
+  },
+  toggleLabel: {
+    fontSize: "11px",
+    letterSpacing: "0.14em",
+    color: "rgba(255,255,255,0.45)",
+    margin: "0 0 4px",
+  },
+  toggleDesc: {
+    fontSize: "12px",
+    color: "rgba(255,255,255,0.3)",
+    margin: 0,
+  },
+  toggleBtns: {
+    display: "flex",
+    gap: "8px",
+    flexShrink: 0,
+  },
+  toggleBtn: {
+    padding: "8px 18px",
+    fontSize: "13px",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    letterSpacing: "0.04em",
+  },
+
   stepperVal: {
     fontSize: "18px",
     color: "#fff",
