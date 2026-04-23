@@ -8,21 +8,26 @@ export default function HomePage() {
   return (
     <div style={styles.root}>
       {/* Navbar */}
-      <nav style={styles.navbar}>
-        <div style={styles.navLogo}>
-          <span style={styles.navLogoText}>PYDesignHK</span>
-        </div>
-        <div style={styles.navLinks}>
-          {NAV_LINKS.map((link) => (
-            <a key={link} href="#" style={styles.navLink}>
-              {link}
-            </a>
-          ))}
-        </div>
-        <a href="/login" style={styles.navLoginBtn}>
-          LOGIN
+    <nav style={styles.navbar}>
+    <div style={styles.navLogo}>
+        <img
+        src="/logo.png"
+        alt="PYDesignHK"
+        style={{ height: "40px", width: "40px", marginRight: "10px", objectFit: "contain" }}
+        />
+        <span style={styles.navLogoText}>PYDesignHK</span>
+    </div>
+    <div style={styles.navLinks}>
+        {NAV_LINKS.map((link) => (
+        <a key={link} href="#" style={styles.navLink}>
+            {link}
         </a>
-      </nav>
+        ))}
+    </div>
+    <a href="/login" style={styles.navLoginBtn}>
+        LOGIN
+    </a>
+    </nav>
 
       {/* Section 1 — Hero */}
       <section style={styles.hero}>
@@ -259,9 +264,11 @@ const styles = {
   },
   navLoginBtn: {
     border: `1px solid ${GOLD}`,
-    color: GOLD,
+    color: "#000",
+    background: GOLD,
     padding: "7px 22px",
     fontSize: "12px",
+    fontWeight:"600",
     letterSpacing: "0.12em",
     textDecoration: "none",
   },
