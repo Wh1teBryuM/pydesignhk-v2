@@ -118,6 +118,22 @@ export default function Quote() {
     step1.hasStairs !== null &&
     step1.hasParking !== null;
 
+  const [currentStep, setCurrentStep] = useState(1);
+
+  const [step2, setStep2] = useState({
+    renovationScope: "",       // "full" | "kitchen_only" | "bathroom_only" | "partial"
+    partialRooms: [],           // selected rooms for partial
+    roomOtherText: {},          // { roomId: "text" } for each room with other selected
+    roomOtherEnabled: {},       // { roomId: true/false }
+    additionalZones: "",        // free text for any extra zones
+  });
+
+  const step2Valid =
+    step2.renovationScope === "full" ||
+    step2.renovationScope === "kitchen_only" ||
+    step2.renovationScope === "bathroom_only" ||
+    (step2.renovationScope === "partial" && step2.partialRooms.length > 0);
+
   function Stepper({ field, value, onChange }) {
     return (
       <div style={styles.stepperWrap}>
@@ -157,13 +173,13 @@ export default function Quote() {
           <div key={s} style={styles.progressItem}>
             <div style={{
               ...styles.progressDot,
-              background: i === 0 ? GOLD : "transparent",
-              border: i === 0 ? `2px solid ${GOLD}` : `2px solid rgba(255,255,255,0.15)`,
+              background: i + 1 === currentStep ? GOLD : i + 1 < currentStep ? "rgba(212,160,23,0.4)" : "transparent",
+              border: i + 1 <= currentStep ? `2px solid ${GOLD}` : `2px solid rgba(255,255,255,0.15)`,
             }} />
             <span style={{
               ...styles.progressLabel,
-              color: i === 0 ? GOLD : TEXT_MUTED,
-              fontWeight: i === 0 ? "600" : "400",
+              color: i + 1 === currentStep ? GOLD : i + 1 < currentStep ? "rgba(212,160,23,0.5)" : TEXT_MUTED,
+              fontWeight: i + 1 === currentStep ? "600" : "400",
             }}>{s}</span>
             {i < STEPS.length - 1 && <div style={styles.progressLine} />}
           </div>
@@ -178,8 +194,179 @@ export default function Quote() {
         </div>
       )}
 
-      {/* Step 1 content */}
+            {/* Step content */}
       <div style={styles.contentWrap}>
+        {currentStep === 2 && (
+          <>
+            {/* Step 2 — Renovation Scope */}
+            <div style={styles.section}>
+              <div style={styles.sectionLabel}>01</div>
+              <div style={styles.sectionBody}>
+                <h2 style={styles.sectionTitle}>Renovation Scope</h2>
+                <p style={styles.sectionSub}>Select the scope of your renovation project.</p>
+
+                {/* Scope selection */}
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>SCOPE TYPE</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    {[
+                      { id: "full", label: "Full Renovation", desc: "Complete overhaul of the entire flat. All zones included." },
+                      { id: "kitchen_only", label: "Kitchen Only", desc: "Kitchen demolition, plumbing, tiling, aluminium works, cabinets." },
+                      { id: "bathroom_only", label: "Bathroom Only", desc: "Bathroom demolition, plumbing, tiling, aluminium works, cabinets." },
+                      { id: "partial", label: "Partial Renovation", desc: "Select specific rooms. Zones activate based on your selection." },
+                    ].map((scope) => (
+                      <button
+                        key={scope.id}
+                        type="button"
+                        style={{
+                          ...styles.scopeCard,
+                          border: step2.renovationScope === scope.id
+                            ? `1.5px solid ${GOLD}`
+                            : "1.5px solid rgba(255,255,255,0.08)",
+                          background: step2.renovationScope === scope.id
+                            ? "rgba(212,160,23,0.06)"
+                            : BG_PANEL,
+                        }}
+                        onClick={() => setStep2({ ...step2, renovationScope: scope.id, partialRooms: [], roomOtherText: {}, roomOtherEnabled: {} })}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <div style={{ textAlign: "left" }}>
+                            <p style={{ ...styles.scopeLabel, color: step2.renovationScope === scope.id ? GOLD : "#fff" }}>{scope.label}</p>
+                            <p style={styles.scopeDesc}>{scope.desc}</p>
+                          </div>
+                          {step2.renovationScope === scope.id && (
+                            <span style={{ color: GOLD, fontSize: "18px", flexShrink: 0, marginLeft: "16px" }}>✦</span>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Partial room selection */}
+                {step2.renovationScope === "partial" && (
+                  <div style={styles.fieldGroup}>
+                    <label style={styles.fieldLabel}>SELECT ROOMS TO RENOVATE</label>
+                    <p style={{ fontSize: "12px", color: TEXT_MUTED, margin: "-8px 0 16px" }}>Select all that apply. You can add custom requirements per room.</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      {[
+                        { id: "living_room", label: "Living Room", zones: "Demolition, Masonry/Tiling, Painting, Carpentry" },
+                        { id: "master_bedroom", label: "Master Bedroom", zones: "Demolition, Painting, Carpentry" },
+                        { id: "bedroom", label: "Bedroom(s)", zones: "Demolition, Painting, Carpentry" },
+                        { id: "kitchen", label: "Kitchen", zones: "Demolition, Plumbing & Electrical, Masonry/Tiling, Aluminium, Cabinets" },
+                        { id: "bathroom", label: "Bathroom(s)", zones: "Demolition, Plumbing & Electrical, Masonry/Tiling, Aluminium, Cabinets" },
+                      ].map((room) => {
+                        const isSelected = step2.partialRooms.includes(room.id);
+                        const otherEnabled = step2.roomOtherEnabled[room.id];
+                        return (
+                          <div key={room.id}>
+                            <button
+                              type="button"
+                              style={{
+                                ...styles.roomSelectCard,
+                                border: isSelected ? `1.5px solid ${GOLD}` : "1.5px solid rgba(255,255,255,0.08)",
+                                background: isSelected ? "rgba(212,160,23,0.06)" : BG_PANEL,
+                                width: "100%",
+                              }}
+                              onClick={() => {
+                                const rooms = isSelected
+                                  ? step2.partialRooms.filter(r => r !== room.id)
+                                  : [...step2.partialRooms, room.id];
+                                setStep2({ ...step2, partialRooms: rooms });
+                              }}
+                            >
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div style={{ textAlign: "left" }}>
+                                  <p style={{ ...styles.scopeLabel, color: isSelected ? GOLD : "#fff", margin: "0 0 4px" }}>{room.label}</p>
+                                  <p style={{ ...styles.scopeDesc, margin: 0 }}>Zones: {room.zones}</p>
+                                </div>
+                                <div style={{
+                                  width: "20px", height: "20px", border: isSelected ? `2px solid ${GOLD}` : "2px solid rgba(255,255,255,0.2)",
+                                  background: isSelected ? GOLD : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                                }}>
+                                  {isSelected && <span style={{ color: "#000", fontSize: "12px", fontWeight: "700" }}>✓</span>}
+                                </div>
+                              </div>
+                            </button>
+
+                            {/* Other zone toggle per room */}
+                            {isSelected && (
+                              <div style={{ marginTop: "8px", paddingLeft: "16px", borderLeft: `2px solid rgba(212,160,23,0.2)` }}>
+                                <button
+                                  type="button"
+                                  style={{
+                                    background: "transparent", border: "none", color: otherEnabled ? GOLD : TEXT_MUTED,
+                                    fontSize: "12px", letterSpacing: "0.08em", cursor: "pointer", padding: "4px 0",
+                                    fontFamily: "inherit",
+                                  }}
+                                  onClick={() => setStep2({
+                                    ...step2,
+                                    roomOtherEnabled: { ...step2.roomOtherEnabled, [room.id]: !otherEnabled },
+                                    roomOtherText: { ...step2.roomOtherText, [room.id]: "" },
+                                  })}
+                                >
+                                  {otherEnabled ? "− Remove other requirements" : "+ Add other requirements for this room"}
+                                </button>
+                                {otherEnabled && (
+                                  <textarea
+                                    style={{ ...styles.textarea, marginTop: "8px" }}
+                                    placeholder={"Describe any specific requirements for " + room.label + "..."}
+                                    value={step2.roomOtherText[room.id] || ""}
+                                    onChange={(e) => setStep2({
+                                      ...step2,
+                                      roomOtherText: { ...step2.roomOtherText, [room.id]: e.target.value },
+                                    })}
+                                    rows={2}
+                                  />
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Additional zones free text — always visible */}
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>ADDITIONAL ZONES OR REQUIREMENTS <span style={{ color: TEXT_MUTED, fontWeight: "400" }}>(optional)</span></label>
+                  <textarea
+                    style={styles.textarea}
+                    placeholder="Any zones or requirements not covered above — e.g. balcony, storeroom, custom built-in, structural changes..."
+                    value={step2.additionalZones}
+                    onChange={(e) => setStep2({ ...step2, additionalZones: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+              </div>
+            </div>
+
+            {/* Step 2 Navigation */}
+            <div style={styles.navRow}>
+              <button style={styles.backBtn} onClick={() => setCurrentStep(1)} type="button">
+                ← Back
+              </button>
+              <button
+                style={{
+                  ...styles.continueBtn,
+                  background: step2Valid ? GOLD : "rgba(212,160,23,0.2)",
+                  color: step2Valid ? "#000" : "rgba(255,255,255,0.2)",
+                  cursor: step2Valid ? "pointer" : "not-allowed",
+                }}
+                disabled={!step2Valid}
+                type="button"
+                onClick={() => setCurrentStep(3)}
+              >
+                Continue → <span style={styles.continueSub}>Materials</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        {currentStep === 1 && (
+            <>
 
         {/* Section A — Priority Profile */}
         <div style={styles.section}>
@@ -456,7 +643,7 @@ export default function Quote() {
           </div>
         </div>
 
-        {/* Navigation */}
+        {/* Step 1 Navigation */}
         <div style={styles.navRow}>
           <button style={styles.backBtn} onClick={() => navigate("/")} type="button">
             ← Back
@@ -470,11 +657,13 @@ export default function Quote() {
             }}
             disabled={!step1Valid}
             type="button"
+            onClick={() => { if (step1Valid) setCurrentStep(2); }}
           >
             Continue → <span style={styles.continueSub}>Scope</span>
           </button>
         </div>
-
+          </>
+        )}
       </div>
 
       <Footer />
@@ -586,7 +775,7 @@ const styles = {
     gap: "48px",
   },
   sectionLabel: {
-    fontSize: "25px",
+    fontSize: "11px",
     letterSpacing: "0.2em",
     color: "rgba(212,160,23,0.4)",
     fontWeight: "600",
@@ -776,6 +965,33 @@ const styles = {
     fontFamily: "inherit",
     lineHeight: 1,
   },
+  // Scope cards
+  scopeCard: {
+    padding: "20px 24px",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    width: "100%",
+    transition: "all 0.15s ease",
+  },
+  scopeLabel: {
+    fontSize: "15px",
+    fontFamily: "Georgia, serif",
+    fontWeight: "400",
+    margin: "0 0 6px",
+  },
+  scopeDesc: {
+    fontSize: "13px",
+    color: TEXT_MUTED,
+    margin: 0,
+    lineHeight: 1.5,
+  },
+  roomSelectCard: {
+    padding: "16px 20px",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "all 0.15s ease",
+  },
+
   // Address grid
   addressGrid: {
     display: "grid",
