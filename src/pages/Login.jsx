@@ -80,7 +80,7 @@ export default function LoginPage() {
               <div style={styles.fieldGroup}>
                 <label style={styles.label}>EMAIL ADDRESS</label>
                 <div style={styles.inputWrap}>
-                  <span style={styles.inputIcon}>✉</span>
+                  <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
                   <input
                     type="email"
                     placeholder="name@company.com"
@@ -101,7 +101,7 @@ export default function LoginPage() {
                   </a>
                 </div>
                 <div style={styles.inputWrap}>
-                  <span style={styles.inputIcon}>🔒</span>
+                  <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
@@ -239,7 +239,7 @@ const styles = {
     alignItems: "flex-end",
     padding: "48px",
     backgroundImage:
-      "url('https://images.unsplash.com/photo-1600210492493-0946911123ea?w=800&q=80')",
+      "url('bedroom.png')",
     backgroundSize: "cover",
     backgroundPosition: "center",
   },
