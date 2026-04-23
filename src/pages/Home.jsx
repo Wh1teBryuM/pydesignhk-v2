@@ -423,22 +423,30 @@ const styles = {
 
   // Mission
   missionSection: {
-    display: "flex",
-    minHeight: "600px",
-    borderTop: `1px solid ${BORDER}`,
-  },
-  missionImage: {
-    flex: "0 0 42%",
-    backgroundImage: "url('mission.png')",
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    background: "#111",
-  },
-  missionContent: {
-    flex: 1,
-    padding: "80px 64px",
-    background: "#111",
-  },
+  display: "flex",
+  alignItems: "center",      // ← add this
+  paddingTop: "50px",
+  paddingLeft: "50px",
+  paddingBottom: "50px",
+  minHeight: "600px",
+  borderTop: `1px solid ${BORDER}`,
+},
+missionImage: {
+  flex: "0 0 48%",
+  alignSelf: "stretch",      // ← forces image to fill full height
+  backgroundImage: "url('/mission.jpg')",
+  backgroundSize: "cover",
+  backgroundPosition: "center",
+  backgroundColor: "#111",
+},
+missionContent: {
+  flex: 1,
+  padding: "0 94px 96px",         // ← remove the 80px top padding
+  background: "#111",
+  display: "flex",           // ← add these two
+  flexDirection: "column",
+  justifyContent: "center",
+},
   missionTag: {
     fontSize: "11px",
     letterSpacing: "0.2em",
@@ -455,7 +463,7 @@ const styles = {
   },
   missionItalic: { fontStyle: "italic", color: GOLD },
   missionQuote: {
-    fontSize: "14px",
+    fontSize: "16px",
     color: TEXT_MUTED,
     lineHeight: 1.7,
     margin: "0 0 36px",
@@ -466,20 +474,20 @@ const styles = {
   missionPoints: { display: "flex", flexDirection: "column", gap: "24px" },
   missionPoint: { display: "flex", gap: "20px", alignItems: "flex-start" },
   missionNum: {
-    fontSize: "13px",
+    fontSize: "25px",
     color: GOLD,
     fontWeight: "600",
     flexShrink: 0,
     marginTop: "2px",
   },
   missionPointTitle: {
-    fontSize: "12px",
+    fontSize: "15px",
     letterSpacing: "0.12em",
     color: "#fff",
     margin: "0 0 6px",
   },
   missionPointText: {
-    fontSize: "13px",
+    fontSize: "15px",
     color: TEXT_MUTED,
     lineHeight: 1.6,
     margin: 0,
