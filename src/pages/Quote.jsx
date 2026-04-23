@@ -59,6 +59,58 @@ const BUILDING_AGES = [
   { id: "30_plus", label: "30+ years" },
 ];
 
+const ZONES = [
+  { id: "demolition", name: "Demolition", zh: "清拆", desc: "Structural removal, hacking, debris clearance", structural: false },
+  { id: "plumbing_electrical", name: "Plumbing & Electrical", zh: "水電", desc: "Pipes, wiring, fixtures, sockets, switches", structural: true },
+  { id: "masonry_tiling", name: "Masonry & Tiling", zh: "泥水", desc: "Floor and wall tiles, screeding, waterproofing", structural: false },
+  { id: "painting", name: "Painting", zh: "油漆", desc: "Walls, ceilings, feature walls", structural: false },
+  { id: "carpentry", name: "Carpentry", zh: "木器", desc: "Built-in wardrobes, feature walls, shelving", structural: false },
+  { id: "aluminium", name: "Aluminium Works", zh: "鋁質", desc: "Windows, grilles, sliding doors, frames", structural: true },
+  { id: "cabinets", name: "Cabinets", zh: "櫥櫃", desc: "Kitchen and bathroom cabinet units", structural: false },
+  { id: "miscellaneous", name: "Miscellaneous", zh: "其他", desc: "Sundries, protection, clean-up", structural: false },
+];
+
+const SCOPE_ZONE_MAP = {
+  full: ["demolition", "plumbing_electrical", "masonry_tiling", "painting", "carpentry", "aluminium", "cabinets", "miscellaneous"],
+  kitchen_only: ["demolition", "plumbing_electrical", "masonry_tiling", "aluminium", "cabinets", "miscellaneous"],
+  bathroom_only: ["demolition", "plumbing_electrical", "masonry_tiling", "aluminium", "cabinets", "miscellaneous"],
+};
+
+const PARTIAL_ROOM_ZONE_MAP = {
+  living_room: ["demolition", "masonry_tiling", "painting", "carpentry", "miscellaneous"],
+  master_bedroom: ["demolition", "painting", "carpentry", "miscellaneous"],
+  bedroom: ["demolition", "painting", "carpentry", "miscellaneous"],
+  kitchen: ["demolition", "plumbing_electrical", "masonry_tiling", "aluminium", "cabinets", "miscellaneous"],
+  bathroom: ["demolition", "plumbing_electrical", "masonry_tiling", "aluminium", "cabinets", "miscellaneous"],
+};
+
+const GRADE_DEFAULTS_BY_PRIORITY = {
+  look_good_control_cost: (zone) => (zone.structural ? "basic" : "standard"),
+  practical_functional: () => "basic",
+  full_premium: () => "premium",
+  quality_first: (zone) => (zone.structural ? "premium" : "standard"),
+};
+
+function getActiveZones(step2) {
+  const scope = step2?.renovationScope;
+  if (!scope) return ZONES;
+  if (scope !== "partial") {
+    const ids = SCOPE_ZONE_MAP[scope] || ZONES.map((z) => z.id);
+    return ZONES.filter((z) => ids.includes(z.id));
+  }
+  const rooms = step2?.partialRooms || [];
+  const ids = new Set();
+  rooms.forEach((r) => (PARTIAL_ROOM_ZONE_MAP[r] || []).forEach((id) => ids.add(id)));
+  return ZONES.filter((z) => ids.has(z.id));
+}
+
+function buildGradeDefaults(activeZones, priority) {
+  const fn = GRADE_DEFAULTS_BY_PRIORITY[priority] || GRADE_DEFAULTS_BY_PRIORITY["practical_functional"];
+  const result = {};
+  activeZones.forEach((z) => { result[z.id] = fn(z); });
+  return result;
+}
+
 const STEPS = ["Basics", "Scope", "Materials", "Extras", "Estimate", "Inquiry"];
 
 export default function Quote() {
@@ -121,12 +173,14 @@ export default function Quote() {
   const [currentStep, setCurrentStep] = useState(1);
 
   const [step2, setStep2] = useState({
-    renovationScope: "",       // "full" | "kitchen_only" | "bathroom_only" | "partial"
-    partialRooms: [],           // selected rooms for partial
-    roomOtherText: {},          // { roomId: "text" } for each room with other selected
-    roomOtherEnabled: {},       // { roomId: true/false }
-    additionalZones: "",        // free text for any extra zones
+    renovationScope: "",
+    partialRooms: [],
+    roomOtherText: {},
+    roomOtherEnabled: {},
+    additionalZones: "",
   });
+
+  const [step3, setStep3] = useState(null);
 
   const step2Valid =
     step2.renovationScope === "full" ||
@@ -134,20 +188,23 @@ export default function Quote() {
     step2.renovationScope === "bathroom_only" ||
     (step2.renovationScope === "partial" && step2.partialRooms.length > 0);
 
+  const step3Valid = step3 !== null && Object.keys(step3).length > 0;
+
+  // Pre-fill grades when entering step 3
+  useEffect(() => {
+    if (currentStep !== 3) return;
+    if (step3 !== null) return;
+    const active = getActiveZones(step2);
+    const defaults = buildGradeDefaults(active, step1.priority);
+    setStep3(defaults);
+  }, [currentStep]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function Stepper({ field, value, onChange }) {
     return (
       <div style={styles.stepperWrap}>
-        <button
-          style={styles.stepperBtn}
-          onClick={() => onChange(Math.max(0, value - 1))}
-          type="button"
-        >−</button>
+        <button style={styles.stepperBtn} onClick={() => onChange(Math.max(0, value - 1))} type="button">−</button>
         <span style={styles.stepperVal}>{value}</span>
-        <button
-          style={styles.stepperBtn}
-          onClick={() => onChange(Math.min(10, value + 1))}
-          type="button"
-        >+</button>
+        <button style={styles.stepperBtn} onClick={() => onChange(Math.min(10, value + 1))} type="button">+</button>
       </div>
     );
   }
@@ -194,18 +251,270 @@ export default function Quote() {
         </div>
       )}
 
-            {/* Step content */}
+      {/* Step content */}
       <div style={styles.contentWrap}>
+
+        {/* ── STEP 1 ── */}
+        {currentStep === 1 && (
+          <>
+            <div style={styles.section}>
+              <div style={styles.sectionLabel}>01</div>
+              <div style={styles.sectionBody}>
+                <h2 style={styles.sectionTitle}>What matters most to you?</h2>
+                <p style={styles.sectionSub}>This shapes how we allocate your budget across materials and finishes.</p>
+                <div style={styles.priorityGrid}>
+                  {PRIORITY_PROFILES.map((p) => (
+                    <button
+                      key={p.id}
+                      style={{
+                        ...styles.priorityCard,
+                        border: step1.priority === p.id ? `1.5px solid ${GOLD}` : `1.5px solid rgba(255,255,255,0.08)`,
+                        background: step1.priority === p.id ? "rgba(212,160,23,0.06)" : BG_PANEL,
+                      }}
+                      onClick={() => setStep1({ ...step1, priority: p.id })}
+                      type="button"
+                    >
+                      {step1.priority === p.id && <div style={styles.priorityCheck}>✦</div>}
+                      <p style={styles.priorityZh}>{p.zh}</p>
+                      <p style={styles.priorityEn}>{p.en}</p>
+                      <p style={styles.priorityDesc}>{p.desc}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.divider} />
+
+            <div style={styles.section}>
+              <div style={styles.sectionLabel}>02</div>
+              <div style={styles.sectionBody}>
+                <h2 style={styles.sectionTitle}>Project Dimensions</h2>
+                <p style={styles.sectionSub}>These inputs drive all quantity and cost calculations.</p>
+
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>PROPERTY TYPE</label>
+                  <div style={styles.btnGroup}>
+                    {PROPERTY_TYPES.map((pt) => (
+                      <button
+                        key={pt.id}
+                        type="button"
+                        style={{
+                          ...styles.btnGroupItem,
+                          border: step1.propertyType === pt.id ? `1.5px solid ${GOLD}` : `1.5px solid rgba(255,255,255,0.1)`,
+                          color: step1.propertyType === pt.id ? GOLD : TEXT_DIM,
+                          background: step1.propertyType === pt.id ? "rgba(212,160,23,0.06)" : "transparent",
+                        }}
+                        onClick={() => setStep1({ ...step1, propertyType: pt.id })}
+                      >{pt.label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>DISTRICT</label>
+                  <select
+                    style={styles.select}
+                    value={step1.district}
+                    onChange={(e) => setStep1({ ...step1, district: e.target.value })}
+                  >
+                    <option value="">Select district</option>
+                    {HK_DISTRICTS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>BUILDING AGE</label>
+                  <div style={styles.btnGroup}>
+                    {BUILDING_AGES.map((ba) => (
+                      <button
+                        key={ba.id}
+                        type="button"
+                        style={{
+                          ...styles.btnGroupItem,
+                          border: step1.buildingAge === ba.id ? `1.5px solid ${GOLD}` : `1.5px solid rgba(255,255,255,0.1)`,
+                          color: step1.buildingAge === ba.id ? GOLD : TEXT_DIM,
+                          background: step1.buildingAge === ba.id ? "rgba(212,160,23,0.06)" : "transparent",
+                        }}
+                        onClick={() => setStep1({ ...step1, buildingAge: ba.id })}
+                      >{ba.label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>SALEABLE AREA</label>
+                  <div style={styles.inputWrap}>
+                    <input
+                      style={styles.input}
+                      type="number"
+                      min="1"
+                      placeholder="e.g. 450"
+                      value={step1.sqft || ""}
+                      onChange={(e) => setStep1({ ...step1, sqft: parseInt(e.target.value) || 0 })}
+                    />
+                    <span style={styles.inputSuffix}>SQ FT</span>
+                  </div>
+                </div>
+
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>ROOM COUNT</label>
+                  <p style={styles.fieldHint}>At least one room required.</p>
+                  <div style={styles.roomGrid}>
+                    {[
+                      { label: "Bedrooms", key: "bedrooms" },
+                      { label: "Bathrooms", key: "bathrooms" },
+                      { label: "Kitchens", key: "kitchens" },
+                      { label: "Living Rooms", key: "livingRooms" },
+                    ].map(({ label, key }) => (
+                      <div key={key} style={styles.roomItem}>
+                        <span style={styles.roomLabel}>{label}</span>
+                        <Stepper field={key} value={step1[key]} onChange={(v) => setStep1({ ...step1, [key]: v })} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.divider} />
+
+            <div style={styles.section}>
+              <div style={styles.sectionLabel}>03</div>
+              <div style={styles.sectionBody}>
+                <h2 style={styles.sectionTitle}>Property Address</h2>
+                <p style={styles.sectionSub}>Required for the owner to prepare for the site visit.</p>
+                <div style={styles.addressGrid}>
+                  {[
+                    { label: "ESTATE / BUILDING NAME", key: "estateName", placeholder: "e.g. Laguna City, Metro Harbour Plaza", full: true },
+                    { label: "STREET", key: "street", placeholder: "e.g. 8 Laguna Street", full: true },
+                    { label: "BLOCK", key: "block", placeholder: "e.g. Block A" },
+                    { label: "FLOOR", key: "floor", placeholder: "e.g. 12" },
+                    { label: "FLAT", key: "flat", placeholder: "e.g. 3B" },
+                  ].map(({ label, key, placeholder, full }) => (
+                    <div key={key} style={{ ...styles.fieldGroup, gridColumn: full ? "1 / -1" : "auto" }}>
+                      <label style={styles.fieldLabel}>{label}</label>
+                      <input
+                        style={styles.textInput}
+                        type="text"
+                        placeholder={placeholder}
+                        value={step1[key]}
+                        onChange={(e) => setStep1({ ...step1, [key]: e.target.value })}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.divider} />
+
+            <div style={styles.section}>
+              <div style={styles.sectionLabel}>04</div>
+              <div style={styles.sectionBody}>
+                <h2 style={styles.sectionTitle}>Site Conditions</h2>
+                <p style={styles.sectionSub}>These affect labour and logistics costs.</p>
+
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>LIFT ACCESS</label>
+                  <div style={styles.btnGroup}>
+                    {[
+                      { id: "direct", label: "Direct lift to apartment" },
+                      { id: "change_at_podium", label: "Change lift at podium" },
+                      { id: "no_lift", label: "No lift" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        style={{
+                          ...styles.btnGroupItem,
+                          border: step1.liftAccess === opt.id ? `1.5px solid ${GOLD}` : "1.5px solid rgba(255,255,255,0.1)",
+                          color: step1.liftAccess === opt.id ? GOLD : TEXT_DIM,
+                          background: step1.liftAccess === opt.id ? "rgba(212,160,23,0.06)" : "transparent",
+                        }}
+                        onClick={() => setStep1({ ...step1, liftAccess: opt.id })}
+                      >{opt.label}</button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={styles.toggleRow}>
+                  {[
+                    { key: "hasStairs", label: "STAIRS", desc: "Steps involved in access" },
+                    { key: "hasParking", label: "PARKING AVAILABLE", desc: "On-site parking for delivery" },
+                  ].map(({ key, label, desc }) => (
+                    <div key={key} style={styles.toggleCard}>
+                      <div>
+                        <p style={styles.toggleLabel}>{label}</p>
+                        <p style={styles.toggleDesc}>{desc}</p>
+                      </div>
+                      <div style={styles.toggleBtns}>
+                        <button
+                          type="button"
+                          style={{
+                            ...styles.toggleBtn,
+                            background: step1[key] === true ? GOLD : "transparent",
+                            color: step1[key] === true ? "#000" : TEXT_DIM,
+                            border: step1[key] === true ? `1px solid ${GOLD}` : "1px solid rgba(255,255,255,0.1)",
+                          }}
+                          onClick={() => setStep1({ ...step1, [key]: true })}
+                        >Yes</button>
+                        <button
+                          type="button"
+                          style={{
+                            ...styles.toggleBtn,
+                            background: step1[key] === false ? "rgba(255,255,255,0.08)" : "transparent",
+                            color: step1[key] === false ? "#fff" : TEXT_DIM,
+                            border: step1[key] === false ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.1)",
+                          }}
+                          onClick={() => setStep1({ ...step1, [key]: false })}
+                        >No</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={styles.fieldGroup}>
+                  <label style={styles.fieldLabel}>SITE REMARKS <span style={{ color: TEXT_MUTED, fontWeight: "400" }}>(optional)</span></label>
+                  <textarea
+                    style={styles.textarea}
+                    placeholder="Narrow corridors, low ceiling, existing defects, or anything else the team should know before visiting."
+                    value={step1.siteRemarks}
+                    onChange={(e) => setStep1({ ...step1, siteRemarks: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={styles.navRow}>
+              <button style={styles.backBtn} onClick={() => navigate("/")} type="button">← Back</button>
+              <button
+                style={{
+                  ...styles.continueBtn,
+                  background: step1Valid ? GOLD : "rgba(212,160,23,0.2)",
+                  color: step1Valid ? "#000" : "rgba(255,255,255,0.2)",
+                  cursor: step1Valid ? "pointer" : "not-allowed",
+                }}
+                disabled={!step1Valid}
+                type="button"
+                onClick={() => { if (step1Valid) setCurrentStep(2); }}
+              >
+                Continue → <span style={styles.continueSub}>Scope</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* ── STEP 2 ── */}
         {currentStep === 2 && (
           <>
-            {/* Step 2 — Renovation Scope */}
             <div style={styles.section}>
               <div style={styles.sectionLabel}>05</div>
               <div style={styles.sectionBody}>
                 <h2 style={styles.sectionTitle}>Renovation Scope</h2>
                 <p style={styles.sectionSub}>Select the scope of your renovation project.</p>
 
-                {/* Scope selection */}
                 <div style={styles.fieldGroup}>
                   <label style={styles.fieldLabel}>SCOPE TYPE</label>
                   <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -220,14 +529,13 @@ export default function Quote() {
                         type="button"
                         style={{
                           ...styles.scopeCard,
-                          border: step2.renovationScope === scope.id
-                            ? `1.5px solid ${GOLD}`
-                            : "1.5px solid rgba(255,255,255,0.08)",
-                          background: step2.renovationScope === scope.id
-                            ? "rgba(212,160,23,0.06)"
-                            : BG_PANEL,
+                          border: step2.renovationScope === scope.id ? `1.5px solid ${GOLD}` : "1.5px solid rgba(255,255,255,0.08)",
+                          background: step2.renovationScope === scope.id ? "rgba(212,160,23,0.06)" : BG_PANEL,
                         }}
-                        onClick={() => setStep2({ ...step2, renovationScope: scope.id, partialRooms: [], roomOtherText: {}, roomOtherEnabled: {} })}
+                        onClick={() => {
+                          setStep2({ ...step2, renovationScope: scope.id, partialRooms: [], roomOtherText: {}, roomOtherEnabled: {} });
+                          setStep3(null); // reset grades when scope changes
+                        }}
                       >
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <div style={{ textAlign: "left" }}>
@@ -243,7 +551,6 @@ export default function Quote() {
                   </div>
                 </div>
 
-                {/* Partial room selection */}
                 {step2.renovationScope === "partial" && (
                   <div style={styles.fieldGroup}>
                     <label style={styles.fieldLabel}>SELECT ROOMS TO RENOVATE</label>
@@ -273,6 +580,7 @@ export default function Quote() {
                                   ? step2.partialRooms.filter(r => r !== room.id)
                                   : [...step2.partialRooms, room.id];
                                 setStep2({ ...step2, partialRooms: rooms });
+                                setStep3(null); // reset grades when rooms change
                               }}
                             >
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -281,21 +589,23 @@ export default function Quote() {
                                   <p style={{ ...styles.scopeDesc, margin: 0 }}>Zones: {room.zones}</p>
                                 </div>
                                 <div style={{
-                                  width: "20px", height: "20px", border: isSelected ? `2px solid ${GOLD}` : "2px solid rgba(255,255,255,0.2)",
-                                  background: isSelected ? GOLD : "transparent", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                                  width: "20px", height: "20px",
+                                  border: isSelected ? `2px solid ${GOLD}` : "2px solid rgba(255,255,255,0.2)",
+                                  background: isSelected ? GOLD : "transparent",
+                                  flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
                                 }}>
                                   {isSelected && <span style={{ color: "#000", fontSize: "12px", fontWeight: "700" }}>✓</span>}
                                 </div>
                               </div>
                             </button>
 
-                            {/* Other zone toggle per room */}
                             {isSelected && (
                               <div style={{ marginTop: "8px", paddingLeft: "16px", borderLeft: `2px solid rgba(212,160,23,0.2)` }}>
                                 <button
                                   type="button"
                                   style={{
-                                    background: "transparent", border: "none", color: otherEnabled ? GOLD : TEXT_MUTED,
+                                    background: "transparent", border: "none",
+                                    color: otherEnabled ? GOLD : TEXT_MUTED,
                                     fontSize: "12px", letterSpacing: "0.08em", cursor: "pointer", padding: "4px 0",
                                     fontFamily: "inherit",
                                   }}
@@ -328,7 +638,6 @@ export default function Quote() {
                   </div>
                 )}
 
-                {/* Additional zones free text — always visible */}
                 <div style={styles.fieldGroup}>
                   <label style={styles.fieldLabel}>ADDITIONAL ZONES OR REQUIREMENTS <span style={{ color: TEXT_MUTED, fontWeight: "400" }}>(optional)</span></label>
                   <textarea
@@ -339,15 +648,11 @@ export default function Quote() {
                     rows={3}
                   />
                 </div>
-
               </div>
             </div>
 
-            {/* Step 2 Navigation */}
             <div style={styles.navRow}>
-              <button style={styles.backBtn} onClick={() => setCurrentStep(1)} type="button">
-                ← Back
-              </button>
+              <button style={styles.backBtn} onClick={() => setCurrentStep(1)} type="button">← Back</button>
               <button
                 style={{
                   ...styles.continueBtn,
@@ -365,305 +670,154 @@ export default function Quote() {
           </>
         )}
 
-        {currentStep === 1 && (
+        {/* ── STEP 3 ── */}
+        {currentStep === 3 && step3 !== null && (() => {
+          const activeZones = getActiveZones(step2);
+          const gradeLabels = {
+            basic:    { label: "Basic",    zh: "基本", multiplier: "1.0×", desc: "Standard local materials, functional finish" },
+            standard: { label: "Standard", zh: "中級", multiplier: "1.25×", desc: "Mid-range materials, improved durability and finish" },
+            premium:  { label: "Premium",  zh: "優質", multiplier: "1.6×",  desc: "High-end imported materials, superior longevity" },
+          };
+          const priorityNote = {
+            look_good_control_cost: "Visible zones defaulted to Standard, hidden works to Basic — adjust freely.",
+            practical_functional:   "All zones defaulted to Basic for maximum cost efficiency.",
+            full_premium:           "All zones defaulted to Premium — no compromise.",
+            quality_first:          "Structural and functional zones set to Premium, finishes to Standard.",
+          }[step1.priority] || "";
+
+          return (
             <>
+              <div style={styles.section}>
+                <div style={styles.sectionLabel}>06</div>
+                <div style={styles.sectionBody}>
+                  <h2 style={styles.sectionTitle}>Material Grade</h2>
+                  <p style={styles.sectionSub}>
+                    Select the quality tier for each active zone. These multipliers are applied to the base rate per zone when calculating your estimate.
+                  </p>
 
-        {/* Section A — Priority Profile */}
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>01</div>
-          <div style={styles.sectionBody}>
-            <h2 style={styles.sectionTitle}>What matters most to you?</h2>
-            <p style={styles.sectionSub}>This shapes how we allocate your budget across materials and finishes.</p>
-            <div style={styles.priorityGrid}>
-              {PRIORITY_PROFILES.map((p) => (
-                <button
-                  key={p.id}
-                  style={{
-                    ...styles.priorityCard,
-                    border: step1.priority === p.id
-                      ? `1.5px solid ${GOLD}`
-                      : `1.5px solid rgba(255,255,255,0.08)`,
-                    background: step1.priority === p.id
-                      ? "rgba(212,160,23,0.06)"
-                      : BG_PANEL,
-                  }}
-                  onClick={() => setStep1({ ...step1, priority: p.id })}
-                  type="button"
-                >
-                  {step1.priority === p.id && (
-                    <div style={styles.priorityCheck}>✦</div>
+                  {priorityNote && (
+                    <div style={styles.gradeNote}>
+                      <span style={{ color: GOLD, fontSize: "10px", flexShrink: 0, marginTop: "2px" }}>✦</span>
+                      <span>{priorityNote}</span>
+                    </div>
                   )}
-                  <p style={styles.priorityZh}>{p.zh}</p>
-                  <p style={styles.priorityEn}>{p.en}</p>
-                  <p style={styles.priorityDesc}>{p.desc}</p>
+
+                  {/* Grade legend */}
+                  <div style={styles.gradeLegend}>
+                    {Object.entries(gradeLabels).map(([id, g]) => (
+                      <div key={id} style={styles.gradeLegendItem}>
+                        <span style={{ ...styles.gradePill, ...(id === "basic" ? styles.gradePill_basic : id === "standard" ? styles.gradePill_standard : styles.gradePill_premium) }}>
+                          {g.label}
+                        </span>
+                        <span style={styles.gradeLegendMult}>{g.multiplier}</span>
+                        <span style={styles.gradeLegendDesc}>{g.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Zone rows */}
+                  <div style={styles.zoneList}>
+                    {activeZones.map((zone, i) => {
+                      const selected = step3[zone.id] || "basic";
+                      return (
+                        <div
+                          key={zone.id}
+                          style={{
+                            ...styles.zoneRow,
+                            borderTop: i === 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                          }}
+                        >
+                          <div style={styles.zoneInfo}>
+                            <div style={styles.zoneNameRow}>
+                              <span style={styles.zoneName}>{zone.name}</span>
+                              <span style={styles.zoneZh}>{zone.zh}</span>
+                              {zone.structural && <span style={styles.structuralBadge}>STRUCTURAL</span>}
+                            </div>
+                            <p style={styles.zoneDesc}>{zone.desc}</p>
+                          </div>
+
+                          <div style={styles.gradeSelector}>
+                            {["basic", "standard", "premium"].map((grade) => {
+                              const isSelected = selected === grade;
+                              return (
+                                <button
+                                  key={grade}
+                                  type="button"
+                                  style={{
+                                    ...styles.gradeBtn,
+                                    background: isSelected
+                                      ? grade === "premium" ? GOLD
+                                        : grade === "standard" ? "rgba(212,160,23,0.18)"
+                                        : "rgba(255,255,255,0.08)"
+                                      : "transparent",
+                                    color: isSelected
+                                      ? grade === "premium" ? "#000"
+                                        : grade === "standard" ? GOLD
+                                        : "rgba(255,255,255,0.75)"
+                                      : "rgba(255,255,255,0.25)",
+                                    border: isSelected
+                                      ? grade === "premium" ? `1.5px solid ${GOLD}`
+                                        : grade === "standard" ? "1.5px solid rgba(212,160,23,0.5)"
+                                        : "1.5px solid rgba(255,255,255,0.2)"
+                                      : "1.5px solid rgba(255,255,255,0.07)",
+                                    fontWeight: isSelected ? "600" : "400",
+                                  }}
+                                  onClick={() => setStep3({ ...step3, [zone.id]: grade })}
+                                >
+                                  {gradeLabels[grade].label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Apply all shortcut */}
+                  <div style={styles.applyAllRow}>
+                    <span style={styles.applyAllLabel}>APPLY TO ALL ZONES</span>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      {["basic", "standard", "premium"].map((grade) => (
+                        <button
+                          key={grade}
+                          type="button"
+                          style={styles.applyAllBtn}
+                          onClick={() => {
+                            const updated = {};
+                            activeZones.forEach((z) => { updated[z.id] = grade; });
+                            setStep3(updated);
+                          }}
+                        >
+                          All {gradeLabels[grade].label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div style={styles.navRow}>
+                <button style={styles.backBtn} onClick={() => setCurrentStep(2)} type="button">← Back</button>
+                <button
+                  style={{
+                    ...styles.continueBtn,
+                    background: step3Valid ? GOLD : "rgba(212,160,23,0.2)",
+                    color: step3Valid ? "#000" : "rgba(255,255,255,0.2)",
+                    cursor: step3Valid ? "pointer" : "not-allowed",
+                  }}
+                  disabled={!step3Valid}
+                  type="button"
+                  onClick={() => { if (step3Valid) setCurrentStep(4); }}
+                >
+                  Continue → <span style={styles.continueSub}>Extras</span>
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.divider} />
-
-        {/* Section B — Project Basics */}
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>02</div>
-          <div style={styles.sectionBody}>
-            <h2 style={styles.sectionTitle}>Project Dimensions</h2>
-            <p style={styles.sectionSub}>These inputs drive all quantity and cost calculations.</p>
-
-            {/* Property Type */}
-            <div style={styles.fieldGroup}>
-              <label style={styles.fieldLabel}>PROPERTY TYPE</label>
-              <div style={styles.btnGroup}>
-                {PROPERTY_TYPES.map((pt) => (
-                  <button
-                    key={pt.id}
-                    type="button"
-                    style={{
-                      ...styles.btnGroupItem,
-                      border: step1.propertyType === pt.id
-                        ? `1.5px solid ${GOLD}`
-                        : `1.5px solid rgba(255,255,255,0.1)`,
-                      color: step1.propertyType === pt.id ? GOLD : TEXT_DIM,
-                      background: step1.propertyType === pt.id
-                        ? "rgba(212,160,23,0.06)"
-                        : "transparent",
-                    }}
-                    onClick={() => setStep1({ ...step1, propertyType: pt.id })}
-                  >
-                    {pt.label}
-                  </button>
-                ))}
               </div>
-            </div>
+            </>
+          );
+        })()}
 
-            {/* District */}
-            <div style={styles.fieldGroup}>
-              <label style={styles.fieldLabel}>DISTRICT</label>
-              <select
-                style={styles.select}
-                value={step1.district}
-                onChange={(e) => setStep1({ ...step1, district: e.target.value })}
-              >
-                <option value="">Select district</option>
-                {HK_DISTRICTS.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Building Age */}
-            <div style={styles.fieldGroup}>
-              <label style={styles.fieldLabel}>BUILDING AGE</label>
-              <div style={styles.btnGroup}>
-                {BUILDING_AGES.map((ba) => (
-                  <button
-                    key={ba.id}
-                    type="button"
-                    style={{
-                      ...styles.btnGroupItem,
-                      border: step1.buildingAge === ba.id
-                        ? `1.5px solid ${GOLD}`
-                        : `1.5px solid rgba(255,255,255,0.1)`,
-                      color: step1.buildingAge === ba.id ? GOLD : TEXT_DIM,
-                      background: step1.buildingAge === ba.id
-                        ? "rgba(212,160,23,0.06)"
-                        : "transparent",
-                    }}
-                    onClick={() => setStep1({ ...step1, buildingAge: ba.id })}
-                  >
-                    {ba.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Saleable Area */}
-            <div style={styles.fieldGroup}>
-              <label style={styles.fieldLabel}>SALEABLE AREA</label>
-              <div style={styles.inputWrap}>
-                <input
-                  style={styles.input}
-                  type="number"
-                  min="1"
-                  placeholder="e.g. 450"
-                  value={step1.sqft || ""}
-                  onChange={(e) => setStep1({ ...step1, sqft: parseInt(e.target.value) || 0 })}
-                />
-                <span style={styles.inputSuffix}>SQ FT</span>
-              </div>
-            </div>
-
-            {/* Room Count */}
-            <div style={styles.fieldGroup}>
-              <label style={styles.fieldLabel}>ROOM COUNT</label>
-              <p style={styles.fieldHint}>At least one room required.</p>
-              <div style={styles.roomGrid}>
-                {[
-                  { label: "Bedrooms", key: "bedrooms" },
-                  { label: "Bathrooms", key: "bathrooms" },
-                  { label: "Kitchens", key: "kitchens" },
-                  { label: "Living Rooms", key: "livingRooms" },
-                ].map(({ label, key }) => (
-                  <div key={key} style={styles.roomItem}>
-                    <span style={styles.roomLabel}>{label}</span>
-                    <Stepper
-                      field={key}
-                      value={step1[key]}
-                      onChange={(v) => setStep1({ ...step1, [key]: v })}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </div>
-
-        <div style={styles.divider} />
-
-        {/* Section C — Property Address */}
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>03</div>
-          <div style={styles.sectionBody}>
-            <h2 style={styles.sectionTitle}>Property Address</h2>
-            <p style={styles.sectionSub}>Required for the owner to prepare for the site visit.</p>
-
-            <div style={styles.addressGrid}>
-              {[
-                { label: "ESTATE / BUILDING NAME", key: "estateName", placeholder: "e.g. Laguna City, Metro Harbour Plaza", full: true },
-                { label: "STREET", key: "street", placeholder: "e.g. 8 Laguna Street", full: true },
-                { label: "BLOCK", key: "block", placeholder: "e.g. Block A" },
-                { label: "FLOOR", key: "floor", placeholder: "e.g. 12" },
-                { label: "FLAT", key: "flat", placeholder: "e.g. 3B" },
-              ].map(({ label, key, placeholder, full }) => (
-                <div key={key} style={{ ...styles.fieldGroup, gridColumn: full ? "1 / -1" : "auto" }}>
-                  <label style={styles.fieldLabel}>{label}</label>
-                  <input
-                    style={styles.textInput}
-                    type="text"
-                    placeholder={placeholder}
-                    value={step1[key]}
-                    onChange={(e) => setStep1({ ...step1, [key]: e.target.value })}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div style={styles.divider} />
-
-        {/* Section D — Site Conditions */}
-        <div style={styles.section}>
-          <div style={styles.sectionLabel}>04</div>
-          <div style={styles.sectionBody}>
-            <h2 style={styles.sectionTitle}>Site Conditions</h2>
-            <p style={styles.sectionSub}>These affect labour and logistics costs.</p>
-
-            {/* Lift Access */}
-            <div style={styles.fieldGroup}>
-              <label style={styles.fieldLabel}>LIFT ACCESS</label>
-              <div style={styles.btnGroup}>
-                {[
-                  { id: "direct", label: "Direct lift to apartment" },
-                  { id: "change_at_podium", label: "Change lift at podium" },
-                  { id: "no_lift", label: "No lift" },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    style={{
-                      ...styles.btnGroupItem,
-                      border: step1.liftAccess === opt.id
-                        ? `1.5px solid ${GOLD}`
-                        : "1.5px solid rgba(255,255,255,0.1)",
-                      color: step1.liftAccess === opt.id ? GOLD : TEXT_DIM,
-                      background: step1.liftAccess === opt.id
-                        ? "rgba(212,160,23,0.06)"
-                        : "transparent",
-                    }}
-                    onClick={() => setStep1({ ...step1, liftAccess: opt.id })}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Stairs + Parking toggles */}
-            <div style={styles.toggleRow}>
-              {[
-                { key: "hasStairs", label: "STAIRS", desc: "Steps involved in access" },
-                { key: "hasParking", label: "PARKING AVAILABLE", desc: "On-site parking for delivery" },
-              ].map(({ key, label, desc }) => (
-                <div key={key} style={styles.toggleCard}>
-                  <div>
-                    <p style={styles.toggleLabel}>{label}</p>
-                    <p style={styles.toggleDesc}>{desc}</p>
-                  </div>
-                  <div style={styles.toggleBtns}>
-                    <button
-                      type="button"
-                      style={{
-                        ...styles.toggleBtn,
-                        background: step1[key] === true ? GOLD : "transparent",
-                        color: step1[key] === true ? "#000" : TEXT_DIM,
-                        border: step1[key] === true ? `1px solid ${GOLD}` : "1px solid rgba(255,255,255,0.1)",
-                      }}
-                      onClick={() => setStep1({ ...step1, [key]: true })}
-                    >Yes</button>
-                    <button
-                      type="button"
-                      style={{
-                        ...styles.toggleBtn,
-                        background: step1[key] === false ? "rgba(255,255,255,0.08)" : "transparent",
-                        color: step1[key] === false ? "#fff" : TEXT_DIM,
-                        border: step1[key] === false ? "1px solid rgba(255,255,255,0.3)" : "1px solid rgba(255,255,255,0.1)",
-                      }}
-                      onClick={() => setStep1({ ...step1, [key]: false })}
-                    >No</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Site Remarks */}
-            <div style={styles.fieldGroup}>
-              <label style={styles.fieldLabel}>SITE REMARKS <span style={{ color: TEXT_MUTED, fontWeight: "400" }}>(optional)</span></label>
-              <textarea
-                style={styles.textarea}
-                placeholder="Narrow corridors, low ceiling, existing defects, or anything else the team should know before visiting."
-                value={step1.siteRemarks}
-                onChange={(e) => setStep1({ ...step1, siteRemarks: e.target.value })}
-                rows={3}
-              />
-            </div>
-
-          </div>
-        </div>
-
-        {/* Step 1 Navigation */}
-        <div style={styles.navRow}>
-          <button style={styles.backBtn} onClick={() => navigate("/")} type="button">
-            ← Back
-          </button>
-          <button
-            style={{
-              ...styles.continueBtn,
-              background: step1Valid ? GOLD : "rgba(212,160,23,0.2)",
-              color: step1Valid ? "#000" : "rgba(255,255,255,0.2)",
-              cursor: step1Valid ? "pointer" : "not-allowed",
-            }}
-            disabled={!step1Valid}
-            type="button"
-            onClick={() => { if (step1Valid) setCurrentStep(2); }}
-          >
-            Continue → <span style={styles.continueSub}>Scope</span>
-          </button>
-        </div>
-          </>
-        )}
       </div>
 
       <Footer />
@@ -679,7 +833,6 @@ const styles = {
     minHeight: "100vh",
   },
 
-  // Page header
   pageHeader: {
     padding: "72px 120px 48px",
     borderBottom: `1px solid ${BORDER}`,
@@ -710,7 +863,6 @@ const styles = {
     maxWidth: "480px",
   },
 
-  // Progress
   progressWrap: {
     display: "flex",
     alignItems: "center",
@@ -742,7 +894,6 @@ const styles = {
     flexShrink: 0,
   },
 
-  // Carry banner
   carryBanner: {
     margin: "24px 120px 0",
     padding: "14px 20px",
@@ -762,14 +913,12 @@ const styles = {
     flexShrink: 0,
   },
 
-  // Content
   contentWrap: {
     maxWidth: "900px",
     margin: "0 auto",
     padding: "64px 120px 96px",
   },
 
-  // Sections
   section: {
     display: "flex",
     gap: "48px",
@@ -806,7 +955,6 @@ const styles = {
     margin: "56px 0",
   },
 
-  // Priority cards
   priorityGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -847,7 +995,6 @@ const styles = {
     margin: 0,
   },
 
-  // Field groups
   fieldGroup: {
     marginBottom: "36px",
   },
@@ -864,7 +1011,6 @@ const styles = {
     margin: "-8px 0 14px",
   },
 
-  // Button group
   btnGroup: {
     display: "flex",
     flexWrap: "wrap",
@@ -879,7 +1025,6 @@ const styles = {
     transition: "all 0.15s ease",
   },
 
-  // Select
   select: {
     background: BG_PANEL,
     border: `1px solid rgba(255,255,255,0.1)`,
@@ -898,11 +1043,9 @@ const styles = {
     paddingRight: "36px",
   },
 
-  // Input
   inputWrap: {
     display: "flex",
     alignItems: "center",
-    gap: "0",
     maxWidth: "280px",
   },
   input: {
@@ -927,7 +1070,6 @@ const styles = {
     whiteSpace: "nowrap",
   },
 
-  // Room steppers
   roomGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -965,7 +1107,14 @@ const styles = {
     fontFamily: "inherit",
     lineHeight: 1,
   },
-  // Scope cards
+  stepperVal: {
+    fontSize: "18px",
+    color: "#fff",
+    fontFamily: "Georgia, serif",
+    minWidth: "20px",
+    textAlign: "center",
+  },
+
   scopeCard: {
     padding: "20px 24px",
     cursor: "pointer",
@@ -992,14 +1141,11 @@ const styles = {
     transition: "all 0.15s ease",
   },
 
-  // Address grid
   addressGrid: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: "0 32px",
   },
-
-  // Text input
   textInput: {
     background: "#141414",
     border: "1px solid rgba(255,255,255,0.1)",
@@ -1011,8 +1157,6 @@ const styles = {
     outline: "none",
     boxSizing: "border-box",
   },
-
-  // Textarea
   textarea: {
     background: "#141414",
     border: "1px solid rgba(255,255,255,0.1)",
@@ -1027,7 +1171,6 @@ const styles = {
     boxSizing: "border-box",
   },
 
-  // Toggle row
   toggleRow: {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -1067,15 +1210,6 @@ const styles = {
     letterSpacing: "0.04em",
   },
 
-  stepperVal: {
-    fontSize: "18px",
-    color: "#fff",
-    fontFamily: "Georgia, serif",
-    minWidth: "20px",
-    textAlign: "center",
-  },
-
-  // Navigation
   navRow: {
     display: "flex",
     justifyContent: "space-between",
@@ -1110,5 +1244,148 @@ const styles = {
     fontWeight: "400",
     opacity: 0.7,
     fontSize: "12px",
+  },
+
+  // Step 3 styles
+  gradeNote: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "flex-start",
+    padding: "14px 18px",
+    background: "rgba(212,160,23,0.04)",
+    border: "1px solid rgba(212,160,23,0.15)",
+    fontSize: "13px",
+    color: TEXT_MUTED,
+    lineHeight: 1.6,
+    marginBottom: "32px",
+  },
+  gradeLegend: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr 1fr",
+    gap: "12px",
+    marginBottom: "40px",
+  },
+  gradeLegendItem: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    padding: "16px",
+    background: BG_PANEL,
+    border: "1px solid rgba(255,255,255,0.06)",
+  },
+  gradePill: {
+    display: "inline-block",
+    fontSize: "11px",
+    letterSpacing: "0.12em",
+    fontWeight: "600",
+    padding: "3px 10px",
+    alignSelf: "flex-start",
+  },
+  gradePill_basic: {
+    background: "rgba(255,255,255,0.06)",
+    color: "rgba(255,255,255,0.55)",
+  },
+  gradePill_standard: {
+    background: "rgba(212,160,23,0.12)",
+    color: GOLD,
+  },
+  gradePill_premium: {
+    background: GOLD,
+    color: "#000",
+  },
+  gradeLegendMult: {
+    fontSize: "20px",
+    fontFamily: "Georgia, serif",
+    color: "#fff",
+    fontWeight: "400",
+  },
+  gradeLegendDesc: {
+    fontSize: "12px",
+    color: TEXT_MUTED,
+    lineHeight: 1.5,
+  },
+  zoneList: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  zoneRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "24px",
+    padding: "20px 0",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
+  },
+  zoneInfo: {
+    flex: 1,
+  },
+  zoneNameRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "4px",
+  },
+  zoneName: {
+    fontSize: "15px",
+    color: "#fff",
+    fontFamily: "Georgia, serif",
+    fontWeight: "400",
+  },
+  zoneZh: {
+    fontSize: "13px",
+    color: "rgba(212,160,23,0.5)",
+    fontFamily: "Georgia, serif",
+  },
+  structuralBadge: {
+    fontSize: "9px",
+    letterSpacing: "0.14em",
+    color: "rgba(255,255,255,0.3)",
+    border: "1px solid rgba(255,255,255,0.12)",
+    padding: "2px 7px",
+    fontWeight: "500",
+  },
+  zoneDesc: {
+    fontSize: "12px",
+    color: TEXT_MUTED,
+    margin: 0,
+    lineHeight: 1.5,
+  },
+  gradeSelector: {
+    display: "flex",
+    gap: "8px",
+    flexShrink: 0,
+  },
+  gradeBtn: {
+    padding: "8px 18px",
+    fontSize: "12px",
+    letterSpacing: "0.08em",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "all 0.12s ease",
+    whiteSpace: "nowrap",
+  },
+  applyAllRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: "28px",
+    paddingTop: "20px",
+    borderTop: "1px solid rgba(255,255,255,0.06)",
+  },
+  applyAllLabel: {
+    fontSize: "11px",
+    letterSpacing: "0.16em",
+    color: TEXT_MUTED,
+  },
+  applyAllBtn: {
+    padding: "8px 18px",
+    background: "transparent",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: TEXT_DIM,
+    fontSize: "12px",
+    letterSpacing: "0.06em",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "all 0.12s ease",
   },
 };
