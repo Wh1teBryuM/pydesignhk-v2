@@ -54,7 +54,7 @@ export default function HomePage() {
             our exclusive client portal.
         </p>
         </div>
-        <a href="/login" style={styles.featureLink}>CLIENT LOGIN →</a>
+        <a href="/login" style={styles.featureLink}>TRACK YOUR OWN PROJECT →</a>
     </div>
     </section>
 
