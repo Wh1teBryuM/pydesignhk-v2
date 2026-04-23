@@ -422,11 +422,12 @@ const styles = {
     fontStyle: "italic",
   },
   footerText: {
-    fontSize: "11px",
-    color: "rgba(255,255,255,0.2)",
-    letterSpacing: "0.06em",
-    marginTop: "32px",
-  },
+  fontSize: "11px",
+  color: "rgba(255,255,255,0.2)",
+  letterSpacing: "0.06em",
+  marginTop: "32px",
+  textAlign: "center",
+},
   footerLinks: {
     color: "rgba(255,255,255,0.2)",
   },
