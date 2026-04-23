@@ -46,27 +46,31 @@ export default function HomePage() {
       </section>
 
       {/* Section 2 — Feature Cards */}
-      <section style={styles.featureSection}>
-        <div style={styles.featureCard}>
-          <span style={styles.featureIcon}>⊞</span>
-          <h3 style={styles.featureTitle}>Precision Cost Estimator</h3>
-          <p style={styles.featureText}>
+    <section style={styles.featureSection}>
+    <div style={styles.featureCard}>
+        <div style={styles.featureCardText}>
+        <h3 style={styles.featureTitle}>Precision Cost Estimator</h3>
+        <p style={styles.featureText}>
             Get an architect-grade budget projection for your renovation based
             on premium material selection and structural requirements.
-          </p>
-          <a href="#" style={styles.featureLink}>CALCULATE YOUR VISION →</a>
+        </p>
         </div>
-        <div style={styles.featureDivider} />
-        <div style={styles.featureCard}>
-          <span style={styles.featureIcon}>∿</span>
-          <h3 style={styles.featureTitle}>Live Project Tracking</h3>
-          <p style={styles.featureText}>
+        <a href="#" style={styles.featureLink}>CALCULATE YOUR VISION →</a>
+    </div>
+
+    <div style={styles.featureDivider} />
+
+    <div style={styles.featureCard}>
+        <div style={styles.featureCardText}>
+        <h3 style={styles.featureTitle}>Live Project Tracking</h3>
+        <p style={styles.featureText}>
             Real-time updates, milestone photos, and budget transparency through
             our exclusive client portal.
-          </p>
-          <a href="/login" style={styles.featureLink}>CLIENT LOGIN →</a>
+        </p>
         </div>
-      </section>
+        <a href="/login" style={styles.featureLink}>CLIENT LOGIN →</a>
+    </div>
+    </section>
 
       {/* Section 3 — Capability */}
       <section style={styles.capabilitySection}>
@@ -334,42 +338,51 @@ const styles = {
     background: "#111",
     borderTop: `1px solid ${BORDER}`,
     borderBottom: `1px solid ${BORDER}`,
+    paddingLeft: "100px",
+    paddingTop: "70px",
+    paddingBottom: "50px"
   },
   featureCard: {
     flex: 1,
     padding: "56px 64px",
+    display: "flex",              // ← side by side layout
+    flexDirection: "row",
+    alignItems: "center",
+    gap: "40px",
   },
   featureDivider: {
     width: "1px",
     background: BORDER,
-    margin: "32px 0",
+    margin: "1px 0",
   },
-  featureIcon: {
-    fontSize: "24px",
-    color: GOLD,
-    display: "block",
-    marginBottom: "20px",
-  },
+
   featureTitle: {
-    fontSize: "22px",
+    fontSize: "35px",             // ← larger
     fontWeight: "400",
     color: "#fff",
     margin: "0 0 12px",
     fontFamily: "Georgia, serif",
   },
   featureText: {
-    fontSize: "14px",
+    fontSize: "17px",
     color: TEXT_MUTED,
     lineHeight: 1.7,
     margin: "0 0 24px",
+    marginTop: "30px",
     maxWidth: "340px",
   },
   featureLink: {
-    fontSize: "12px",
-    letterSpacing: "0.12em",
-    color: GOLD,
-    textDecoration: "none",
-  },
+  display: "inline-block",
+  fontSize: "14px",
+  letterSpacing: "0.12em",
+  color: GOLD,
+  textDecoration: "none",
+  border: `1px solid ${GOLD}`,
+  padding: "14px 24px",
+  marginLeft: "50px",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
+},
 
   // Capability
   capabilitySection: {
