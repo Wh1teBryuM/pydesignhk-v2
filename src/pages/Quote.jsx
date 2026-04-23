@@ -200,7 +200,7 @@ export default function Quote() {
           <>
             {/* Step 2 — Renovation Scope */}
             <div style={styles.section}>
-              <div style={styles.sectionLabel}>01</div>
+              <div style={styles.sectionLabel}>05</div>
               <div style={styles.sectionBody}>
                 <h2 style={styles.sectionTitle}>Renovation Scope</h2>
                 <p style={styles.sectionSub}>Select the scope of your renovation project.</p>
