@@ -279,8 +279,11 @@ const styles = {
     borderLeft: `1px solid ${BORDER}`,
   },
   formWrap: {
-    flex: 1,
-  },
+  flex: 1,
+  maxWidth: '420px',
+  width: '100%',
+  margin: '0 auto',
+},
   heading: {
     fontSize: "32px",
     fontWeight: "400",
