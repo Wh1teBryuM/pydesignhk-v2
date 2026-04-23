@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
-import Navbar from "../components/Navbar"
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const NAV_LINKS = ["Home", "Services", "Cost Estimator", "Track Project"];
 
@@ -156,49 +157,7 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer style={styles.footer}>
-        <div style={styles.footerTop}>
-          <div style={styles.footerBrand}>
-            <p style={styles.footerLogo}>PY INTERIOR CONSTRUCTION</p>
-            <p style={styles.footerBrandText}>
-              A multi-award winning interior construction firm specializing in
-              high-end residential and commercial architectural transformations.
-            </p>
-            <p style={styles.footerLocation}>📍 Wan Chai, London · Manhattan, NY</p>
-          </div>
-          <div style={styles.footerCol}>
-            <p style={styles.footerColTitle}>NAVIGATION</p>
-            {["Home", "Services", "Estimator"].map((l) => (
-              <a key={l} href="#" style={styles.footerLink}>{l}</a>
-            ))}
-          </div>
-          <div style={styles.footerCol}>
-            <p style={styles.footerColTitle}>CONNECT</p>
-            {["Instagram", "LinkedIn", "Contact Us"].map((l) => (
-              <a key={l} href="#" style={styles.footerLink}>{l}</a>
-            ))}
-          </div>
-          <div style={styles.footerCol}>
-            <p style={styles.footerColTitle}>NEWSLETTER</p>
-            <p style={styles.footerNewsletterText}>
-              Join our list for architectural insights and exclusive showcases.
-            </p>
-            <div style={styles.footerNewsletterRow}>
-              <input
-                type="email"
-                placeholder="your@email.com"
-                style={styles.footerInput}
-              />
-              <button style={styles.footerInputBtn}>→</button>
-            </div>
-          </div>
-        </div>
-        <div style={styles.footerBottom}>
-          <p style={styles.footerCopy}>
-            © 2024 P&Y INTERIOR CONSTRUCTION LTD. BUILT FOR PERMANENCE.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import Navbar from "../components/Navbar"
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -157,6 +158,7 @@ export default function LoginPage() {
           </p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
