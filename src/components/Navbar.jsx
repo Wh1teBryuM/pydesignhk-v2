@@ -31,27 +31,30 @@ export default function Navbar() {
   }
 
   return (
-    <nav style={styles.navbar}>
-      <div style={styles.navLogo}>
-        <img
-          src="/logo.png"
-          alt="PYDesignHK"
-          style={{ height: "40px", width: "40px", marginRight: "10px", objectFit: "contain" }}
-        />
-        <span style={styles.navLogoText}>PYDesignHK</span>
-      </div>
-      <div style={styles.navLinks}>
-        {NAV_LINKS.map((link) => (
-          <a key={link} href="#" style={styles.navLink}>
+  <nav style={styles.navbar}>
+    <div onClick={() => navigate("/")} style={{ ...styles.navLogo, cursor: "pointer" }}>
+      <img
+        src="/logo.png"
+        alt="PYDesignHK"
+        style={{ height: "40px", width: "40px", marginRight: "10px", objectFit: "contain" }}
+      />
+      <span style={styles.navLogoText}>PYDesignHK</span>
+    </div>
+    <div style={styles.navLinks}>
+      {NAV_LINKS.map((link) => {
+        const href = link === "Home" ? "/" : "#"
+        return (
+          <a key={link} href={href} style={styles.navLink}>
             {link}
           </a>
-        ))}
-      </div>
-      <button onClick={handleAuthBtn} style={isLoggedIn ? styles.navLogoutBtn : styles.navLoginBtn}>
-    {isLoggedIn ? "LOG OUT" : "LOGIN"}
+        )
+      })}
+    </div>
+    <button onClick={handleAuthBtn} style={isLoggedIn ? styles.navLogoutBtn : styles.navLoginBtn}>
+      {isLoggedIn ? "LOG OUT" : "LOGIN"}
     </button>
-    </nav>
-  )
+  </nav>
+)
 }
 
 const styles = {
@@ -103,7 +106,7 @@ const styles = {
 
   navLogoutBtn: {
   fontSize: "12px",
-  fontWeight: "1200",
+  fontWeight: "800",
   letterSpacing: "0.12em",
   color: "#000",
   background: GOLD,
