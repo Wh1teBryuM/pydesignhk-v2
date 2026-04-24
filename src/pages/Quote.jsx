@@ -59,6 +59,78 @@ const BUILDING_AGES = [
   { id: "30_plus", label: "30+ years" },
 ];
 
+const UNIT_RATES = {
+  demolition:           { basic: 25,     standard: 30,     premium: 35     }, // per sqft
+  plumbing_electrical:  { basic: 27650,  standard: 32000,  premium: 38000  }, // per kitchen+bathroom
+  masonry_tiling:       { basic: 160,    standard: 185,    premium: 220    }, // per sqft
+  painting:             { basic: 70,     standard: 80,     premium: 95     }, // per sqft
+  carpentry:            { basic: 5500,   standard: 7000,   premium: 9500   }, // per room (bed + living)
+  aluminium:            { basic: 10500,  standard: 10500,  premium: 12000  }, // fixed
+  cabinets:             { basic: 19250,  standard: 22000,  premium: 26000  }, // per kitchen+bathroom
+  miscellaneous:        { basic: 10000,  standard: 10000,  premium: 10000  }, // fixed
+};
+ 
+// Site condition multipliers (applied silently to zone subtotals)
+const SITE_MULTIPLIERS = {
+  no_lift:        { zones: ["demolition", "masonry_tiling", "carpentry", "cabinets"], pct: 0.08 },
+  stairs:         { zones: ["demolition", "masonry_tiling", "carpentry", "cabinets"], pct: 0.05 },
+  no_parking:     { zones: ["miscellaneous"],                                          pct: 0.03 },
+  age_16_to_30:   { zones: ["demolition", "plumbing_electrical"],                     pct: 0.05 },
+  age_30_plus:    { zones: ["demolition", "plumbing_electrical"],                     pct: 0.10 },
+};
+ 
+// Calculation function — returns array of { id, name, subtotal } for active zones
+function calculateBOQ(step1, step2, step3) {
+  const activeZones = getActiveZones(step2);
+  const sqft        = step1.sqft || 0;
+  const wetRooms    = (step1.kitchens || 0) + (step1.bathrooms || 0);
+  const dryRooms    = (step1.bedrooms || 0) + (step1.livingRooms || 0);
+ 
+  // Build base subtotals per zone
+  const subtotals = {};
+  activeZones.forEach((zone) => {
+    const grade = step3[zone.id] || "basic";
+    const rate  = UNIT_RATES[zone.id]?.[grade] || 0;
+    let base = 0;
+    switch (zone.id) {
+      case "demolition":          base = sqft * rate;      break;
+      case "plumbing_electrical": base = wetRooms * rate;  break;
+      case "masonry_tiling":      base = sqft * rate;      break;
+      case "painting":            base = sqft * rate;      break;
+      case "carpentry":           base = dryRooms * rate;  break;
+      case "aluminium":           base = rate;             break;
+      case "cabinets":            base = wetRooms * rate;  break;
+      case "miscellaneous":       base = rate;             break;
+      default:                    base = 0;
+    }
+    subtotals[zone.id] = base;
+  });
+ 
+  // Apply site condition multipliers silently
+  const conditions = [];
+  if (step1.liftAccess === "no_lift")           conditions.push(SITE_MULTIPLIERS.no_lift);
+  if (step1.hasStairs === true)                 conditions.push(SITE_MULTIPLIERS.stairs);
+  if (step1.hasParking === false)               conditions.push(SITE_MULTIPLIERS.no_parking);
+  if (step1.buildingAge === "16_to_30")         conditions.push(SITE_MULTIPLIERS.age_16_to_30);
+  if (step1.buildingAge === "30_plus")          conditions.push(SITE_MULTIPLIERS.age_30_plus);
+ 
+  conditions.forEach(({ zones, pct }) => {
+    zones.forEach((zoneId) => {
+      if (subtotals[zoneId] !== undefined) {
+        subtotals[zoneId] = subtotals[zoneId] * (1 + pct);
+      }
+    });
+  });
+ 
+  // Return as array matching active zone order
+  return activeZones.map((zone) => ({
+    id:       zone.id,
+    name:     zone.name,
+    zh:       zone.zh,
+    subtotal: Math.round(subtotals[zone.id] || 0),
+  }));
+}
+
 const ZONES = [
   { id: "demolition", name: "Demolition", zh: "清拆", desc: "Structural removal, hacking, debris clearance", structural: false },
   { id: "plumbing_electrical", name: "Plumbing & Electrical", zh: "水電", desc: "Pipes, wiring, fixtures, sockets, switches", structural: true },
@@ -870,6 +942,107 @@ export default function Quote() {
             </>
           )}
 
+          {currentStep === 5 && step3 !== null && (() => {
+          const lineItems  = calculateBOQ(step1, step2, step3);
+          const grandTotal = lineItems.reduce((sum, item) => sum + item.subtotal, 0);
+ 
+          return (
+            <>
+              <div style={styles.section}>
+                <div style={styles.sectionLabel}>08</div>
+                <div style={styles.sectionBody}>
+                  <h2 style={styles.sectionTitle}>Your Estimate</h2>
+                  <p style={styles.sectionSub}>
+                    Indicative figures based on your inputs. Final pricing is confirmed after Eric's site visit.
+                  </p>
+ 
+                  {/* BOQ table */}
+                  <div style={styles.boqTable}>
+                    {/* Header */}
+                    <div style={styles.boqHeader}>
+                      <span style={styles.boqHeaderZone}>ZONE</span>
+                      <span style={styles.boqHeaderAmt}>AMOUNT (HKD)</span>
+                    </div>
+ 
+                    {/* Zone rows */}
+                    {lineItems.map((item, i) => (
+                      <div
+                        key={item.id}
+                        style={{
+                          ...styles.boqRow,
+                          background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)",
+                        }}
+                      >
+                        <div style={styles.boqZoneCell}>
+                          <span style={styles.boqZoneName}>{item.name}</span>
+                          <span style={styles.boqZoneZh}>{item.zh}</span>
+                        </div>
+                        <span style={styles.boqAmt}>
+                          ${item.subtotal.toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+ 
+                    {/* Divider */}
+                    <div style={styles.boqDivider} />
+ 
+                    {/* Grand total */}
+                    <div style={styles.boqTotalRow}>
+                      <span style={styles.boqTotalLabel}>ESTIMATED TOTAL</span>
+                      <span style={styles.boqTotalAmt}>
+                        ${grandTotal.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+ 
+                  {/* Disclaimer */}
+                  <div style={styles.disclaimer}>
+                    <span style={{ color: GOLD, fontSize: "10px", flexShrink: 0, marginTop: "2px" }}>✦</span>
+                    <p style={styles.disclaimerText}>
+                      Indicative estimate only. Final pricing depends on site conditions, hidden works, and material specification confirmed on-site. Custom furniture, feature lighting, and other bespoke items are quoted separately after consultation.
+                    </p>
+                  </div>
+ 
+                  {/* Additional requirements summary if filled */}
+                  {step4.additionalRequirements.trim() && (
+                    <div style={styles.extrasNote}>
+                      <p style={styles.extrasNoteLabel}>YOUR ADDITIONAL REQUIREMENTS</p>
+                      <p style={styles.extrasNoteText}>{step4.additionalRequirements}</p>
+                    </div>
+                  )}
+ 
+                </div>
+              </div>
+ 
+              <div style={styles.navRow}>
+                <button style={styles.backBtn} onClick={() => setCurrentStep(4)} type="button">
+                  ← Back
+                </button>
+                <div style={{ display: "flex", gap: "12px" }}>
+                  <button
+                    style={styles.startOverBtn}
+                    type="button"
+                    onClick={() => {
+                      setCurrentStep(1);
+                      setStep3(null);
+                      setStep4({ additionalRequirements: "" });
+                    }}
+                  >
+                    Start Over
+                  </button>
+                  <button
+                    style={{ ...styles.continueBtn, background: GOLD, color: "#000", cursor: "pointer", border: "none" }}
+                    type="button"
+                    onClick={() => setCurrentStep(6)}
+                  >
+                    Proceed to Inquiry → <span style={styles.continueSub}>Step 6</span>
+                  </button>
+                </div>
+              </div>
+            </>
+          );
+        })()}
+
       </div>
 
       <Footer />
@@ -1439,5 +1612,122 @@ const styles = {
     cursor: "pointer",
     fontFamily: "inherit",
     transition: "all 0.12s ease",
+  },
+  boqTable: {
+    border: "1px solid rgba(255,255,255,0.08)",
+    marginBottom: "32px",
+  },
+  boqHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "12px 24px",
+    background: "rgba(212,160,23,0.06)",
+    borderBottom: "1px solid rgba(255,255,255,0.08)",
+  },
+  boqHeaderZone: {
+    fontSize: "11px",
+    letterSpacing: "0.16em",
+    color: GOLD,
+    fontWeight: "600",
+  },
+  boqHeaderAmt: {
+    fontSize: "11px",
+    letterSpacing: "0.16em",
+    color: GOLD,
+    fontWeight: "600",
+  },
+  boqRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "16px 24px",
+    borderBottom: "1px solid rgba(255,255,255,0.04)",
+  },
+  boqZoneCell: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+  },
+  boqZoneName: {
+    fontSize: "14px",
+    color: "#fff",
+    fontFamily: "Georgia, serif",
+  },
+  boqZoneZh: {
+    fontSize: "12px",
+    color: "rgba(212,160,23,0.5)",
+    fontFamily: "Georgia, serif",
+  },
+  boqAmt: {
+    fontSize: "15px",
+    color: "#fff",
+    fontFamily: "Georgia, serif",
+    letterSpacing: "0.02em",
+  },
+  boqDivider: {
+    height: "1px",
+    background: BORDER,
+    margin: "0",
+  },
+  boqTotalRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "20px 24px",
+    background: "rgba(212,160,23,0.04)",
+  },
+  boqTotalLabel: {
+    fontSize: "12px",
+    letterSpacing: "0.18em",
+    color: TEXT_MUTED,
+    fontWeight: "600",
+  },
+  boqTotalAmt: {
+    fontSize: "26px",
+    color: GOLD,
+    fontFamily: "Georgia, serif",
+    fontWeight: "400",
+  },
+  disclaimer: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "flex-start",
+    padding: "14px 18px",
+    background: "rgba(212,160,23,0.04)",
+    border: "1px solid rgba(212,160,23,0.15)",
+    marginBottom: "24px",
+  },
+  disclaimerText: {
+    fontSize: "12px",
+    color: TEXT_MUTED,
+    lineHeight: 1.7,
+    margin: 0,
+  },
+  extrasNote: {
+    padding: "16px 20px",
+    background: BG_PANEL,
+    border: "1px solid rgba(255,255,255,0.06)",
+  },
+  extrasNoteLabel: {
+    fontSize: "10px",
+    letterSpacing: "0.16em",
+    color: TEXT_MUTED,
+    margin: "0 0 8px",
+  },
+  extrasNoteText: {
+    fontSize: "13px",
+    color: TEXT_DIM,
+    lineHeight: 1.6,
+    margin: 0,
+  },
+  startOverBtn: {
+    background: "transparent",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: TEXT_DIM,
+    padding: "14px 24px",
+    fontSize: "13px",
+    letterSpacing: "0.08em",
+    cursor: "pointer",
+    fontFamily: "inherit",
   },
 };
