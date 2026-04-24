@@ -258,6 +258,93 @@ export default function Quote() {
   additionalRequirements: "",
 });
 
+const [step6, setStep6] = useState({
+  fullName:              "",
+  phone:                 "",
+  email:                 "",
+  preferredContactMethod: "",
+  inquiryNotes:          "",
+});
+ 
+const [submitting, setSubmitting]   = useState(false);
+const [submitted,  setSubmitted]    = useState(false);
+const [submitError, setSubmitError] = useState("");
+ 
+const step6Valid =
+  step6.fullName.trim() &&
+  step6.phone.trim() &&
+  step6.email.trim() &&
+  step6.preferredContactMethod;
+ 
+async function handleSubmit() {
+  if (!step6Valid || submitting) return;
+  setSubmitting(true);
+  setSubmitError("");
+ 
+  try {
+    const token = localStorage.getItem("token");
+ 
+    const body = {
+      // Step 1
+      priority_profile:  step1.priority,
+      property_type:     step1.propertyType,
+      district:          step1.district,
+      building_age:      step1.buildingAge,
+      sqft:              step1.sqft,
+      bedrooms:          step1.bedrooms,
+      bathrooms:         step1.bathrooms,
+      kitchens:          step1.kitchens,
+      living_rooms:      step1.livingRooms,
+      estate_name:       step1.estateName,
+      block:             step1.block,
+      floor:             step1.floor,
+      flat:              step1.flat,
+      street:            step1.street,
+      lift_access:       step1.liftAccess,
+      has_stairs:        step1.hasStairs,
+      has_parking:       step1.hasParking,
+      site_remarks:      step1.siteRemarks,
+      // Step 2
+      renovation_scope:  step2.renovationScope,
+      partial_rooms:     step2.partialRooms,
+      additional_zones:  step2.additionalZones,
+      // Step 3
+      material_grades:   step3,
+      // Step 4
+      additional_requirements: step4.additionalRequirements,
+      // Step 6
+      contact_full_name:        step6.fullName,
+      contact_phone:            step6.phone,
+      contact_email:            step6.email,
+      preferred_contact_method: step6.preferredContactMethod,
+      inquiry_notes:            step6.inquiryNotes,
+    };
+ 
+    const res = await fetch("http://localhost:3001/quote/submit", {
+      method:  "POST",
+      headers: {
+        "Content-Type":  "application/json",
+        "authorization": token,
+      },
+      body: JSON.stringify(body),
+    });
+ 
+    const data = await res.json();
+ 
+    if (!res.ok) {
+      setSubmitError(data.error || "Something went wrong. Please try again.");
+      setSubmitting(false);
+      return;
+    }
+ 
+    setSubmitted(true);
+ 
+  } catch (err) {
+    setSubmitError("Network error. Please check your connection and try again.");
+    setSubmitting(false);
+  }
+}
+
   const step2Valid =
     step2.renovationScope === "full" ||
     step2.renovationScope === "kitchen_only" ||
@@ -1043,6 +1130,191 @@ export default function Quote() {
           );
         })()}
 
+{currentStep === 6 && (
+          <>
+            {submitted ? (
+              /* ── Confirmation screen ── */
+              <div style={styles.confirmWrap}>
+                <div style={styles.confirmIcon}>✦</div>
+                <h2 style={styles.confirmTitle}>Inquiry Received</h2>
+                <p style={styles.confirmSub}>
+                  Thank you, {step6.fullName}. Eric will review your project details and reach out to you shortly.
+                </p>
+                <div style={styles.confirmDivider} />
+                <p style={styles.confirmNote}>
+                  If you have any urgent questions, you can reach Eric directly on WhatsApp.
+                </p>
+                <a
+                  href="https://wa.me/85293918235"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={styles.whatsappBtnLarge}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  Chat with Eric on WhatsApp
+                </a>
+                <button
+                  style={styles.backHomeBtn}
+                  type="button"
+                  onClick={() => navigate("/")}
+                >
+                  Back to Home
+                </button>
+              </div>
+            ) : (
+              /* ── Inquiry form ── */
+              <>
+                <div style={styles.section}>
+                  <div style={styles.sectionLabel}>09</div>
+                  <div style={styles.sectionBody}>
+                    <h2 style={styles.sectionTitle}>Get in Touch</h2>
+                    <p style={styles.sectionSub}>
+                      Leave your contact details. Eric will review your project and reach out to arrange a site visit.
+                    </p>
+ 
+                    {/* Full Name */}
+                    <div style={styles.fieldGroup}>
+                      <label style={styles.fieldLabel}>FULL NAME</label>
+                      <input
+                        style={styles.textInput}
+                        type="text"
+                        placeholder="e.g. Chan Tai Man"
+                        value={step6.fullName}
+                        onChange={(e) => setStep6({ ...step6, fullName: e.target.value })}
+                      />
+                    </div>
+ 
+                    {/* Phone */}
+                    <div style={styles.fieldGroup}>
+                      <label style={styles.fieldLabel}>PHONE NUMBER</label>
+                      <input
+                        style={styles.textInput}
+                        type="tel"
+                        placeholder="e.g. 9123 4567"
+                        value={step6.phone}
+                        onChange={(e) => setStep6({ ...step6, phone: e.target.value })}
+                      />
+                    </div>
+ 
+                    {/* Email */}
+                    <div style={styles.fieldGroup}>
+                      <label style={styles.fieldLabel}>EMAIL ADDRESS</label>
+                      <input
+                        style={styles.textInput}
+                        type="email"
+                        placeholder="e.g. yourname@email.com"
+                        value={step6.email}
+                        onChange={(e) => setStep6({ ...step6, email: e.target.value })}
+                      />
+                    </div>
+ 
+                    {/* Preferred Contact Method */}
+                    <div style={styles.fieldGroup}>
+                      <label style={styles.fieldLabel}>PREFERRED CONTACT METHOD</label>
+                      <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                        {[
+                          {
+                            id: "whatsapp",
+                            label: "WhatsApp",
+                            icon: (
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                              </svg>
+                            ),
+                          },
+                          { id: "phone_call", label: "Phone Call", icon: null },
+                          { id: "email",      label: "Email",      icon: null },
+                        ].map((method) => {
+                          const isSelected = step6.preferredContactMethod === method.id;
+                          return (
+                            <button
+                              key={method.id}
+                              type="button"
+                              style={{
+                                ...styles.contactMethodBtn,
+                                border: isSelected ? `1.5px solid ${GOLD}` : "1.5px solid rgba(255,255,255,0.08)",
+                                background: isSelected ? "rgba(212,160,23,0.06)" : BG_PANEL,
+                                color: isSelected ? GOLD : TEXT_DIM,
+                              }}
+                              onClick={() => setStep6({ ...step6, preferredContactMethod: method.id })}
+                            >
+                              {method.icon && (
+                                <span style={{ display: "flex", alignItems: "center" }}>
+                                  {method.icon}
+                                </span>
+                              )}
+                              {method.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+ 
+                      {/* WhatsApp direct link — shows when WhatsApp is selected */}
+                      {step6.preferredContactMethod === "whatsapp" && (
+                        <a
+                          href="https://wa.me/85293918235"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={styles.whatsappLink}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                          </svg>
+                          Open WhatsApp chat with Eric →
+                        </a>
+                      )}
+                    </div>
+ 
+                    {/* Additional Notes */}
+                    <div style={styles.fieldGroup}>
+                      <label style={styles.fieldLabel}>
+                        ADDITIONAL NOTES <span style={{ color: TEXT_MUTED, fontWeight: "400" }}>(optional)</span>
+                      </label>
+                      <textarea
+                        style={styles.textarea}
+                        placeholder="Any other information you'd like Eric to know before the site visit..."
+                        value={step6.inquiryNotes}
+                        onChange={(e) => setStep6({ ...step6, inquiryNotes: e.target.value })}
+                        rows={4}
+                      />
+                    </div>
+ 
+                    {/* Error message */}
+                    {submitError && (
+                      <div style={styles.submitError}>
+                        {submitError}
+                      </div>
+                    )}
+ 
+                  </div>
+                </div>
+ 
+                <div style={styles.navRow}>
+                  <button style={styles.backBtn} onClick={() => setCurrentStep(5)} type="button">
+                    ← Back
+                  </button>
+                  <button
+                    style={{
+                      ...styles.continueBtn,
+                      background: step6Valid && !submitting ? GOLD : "rgba(212,160,23,0.2)",
+                      color: step6Valid && !submitting ? "#000" : "rgba(255,255,255,0.2)",
+                      cursor: step6Valid && !submitting ? "pointer" : "not-allowed",
+                      border: "none",
+                    }}
+                    disabled={!step6Valid || submitting}
+                    type="button"
+                    onClick={handleSubmit}
+                  >
+                    {submitting ? "Submitting..." : "Submit Inquiry →"}
+                  </button>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
       </div>
 
       <Footer />
@@ -1725,6 +1997,100 @@ const styles = {
     border: "1px solid rgba(255,255,255,0.1)",
     color: TEXT_DIM,
     padding: "14px 24px",
+    fontSize: "13px",
+    letterSpacing: "0.08em",
+    cursor: "pointer",
+    fontFamily: "inherit",
+  },
+  contactMethodBtn: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    padding: "12px 20px",
+    fontSize: "13px",
+    letterSpacing: "0.04em",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "all 0.15s ease",
+  },
+  whatsappLink: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "12px",
+    fontSize: "12px",
+    color: "#25D366",
+    textDecoration: "none",
+    letterSpacing: "0.04em",
+  },
+  submitError: {
+    padding: "12px 16px",
+    background: "rgba(255,80,80,0.08)",
+    border: "1px solid rgba(255,80,80,0.25)",
+    color: "rgba(255,120,120,0.9)",
+    fontSize: "13px",
+    lineHeight: 1.5,
+    marginBottom: "16px",
+  },
+  confirmWrap: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+    padding: "64px 0",
+    maxWidth: "480px",
+    margin: "0 auto",
+  },
+  confirmIcon: {
+    fontSize: "28px",
+    color: GOLD,
+    marginBottom: "24px",
+  },
+  confirmTitle: {
+    fontSize: "36px",
+    fontFamily: "Georgia, serif",
+    fontWeight: "400",
+    color: "#fff",
+    margin: "0 0 16px",
+  },
+  confirmSub: {
+    fontSize: "15px",
+    color: TEXT_DIM,
+    lineHeight: 1.7,
+    margin: "0 0 32px",
+  },
+  confirmDivider: {
+    width: "48px",
+    height: "1px",
+    background: BORDER,
+    margin: "0 0 32px",
+  },
+  confirmNote: {
+    fontSize: "13px",
+    color: TEXT_MUTED,
+    lineHeight: 1.6,
+    margin: "0 0 24px",
+  },
+  whatsappBtnLarge: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "14px 28px",
+    background: "#25D366",
+    color: "#fff",
+    fontSize: "13px",
+    letterSpacing: "0.06em",
+    fontWeight: "600",
+    textDecoration: "none",
+    fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
+    marginBottom: "16px",
+    transition: "all 0.15s ease",
+  },
+  backHomeBtn: {
+    background: "transparent",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: TEXT_DIM,
+    padding: "12px 24px",
     fontSize: "13px",
     letterSpacing: "0.08em",
     cursor: "pointer",
