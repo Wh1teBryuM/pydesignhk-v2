@@ -182,6 +182,10 @@ export default function Quote() {
 
   const [step3, setStep3] = useState(null);
 
+  const [step4, setStep4] = useState({
+  additionalRequirements: "",
+});
+
   const step2Valid =
     step2.renovationScope === "full" ||
     step2.renovationScope === "kitchen_only" ||
@@ -817,6 +821,54 @@ export default function Quote() {
             </>
           );
         })()}
+
+  {currentStep === 4 && (
+            <>
+              <div style={styles.section}>
+                <div style={styles.sectionLabel}>07</div>
+                <div style={styles.sectionBody}>
+                  <h2 style={styles.sectionTitle}>Additional Requirements</h2>
+                  <p style={styles.sectionSub}>
+                    Anything not covered in the previous steps — special requests, constraints, or preferences. This will be passed directly to Eric before the site visit.
+                  </p>
+  
+                  <div style={styles.fieldGroup}>
+                    <label style={styles.fieldLabel}>
+                      ADDITIONAL REQUIREMENTS <span style={{ color: TEXT_MUTED, fontWeight: "400" }}>(optional)</span>
+                    </label>
+                    <textarea
+                      style={{ ...styles.textarea, minHeight: "160px" }}
+                      placeholder="e.g. Prefer eco-friendly materials, need work completed before Chinese New Year, existing built-in wardrobe to be kept, allergic to certain paint fumes..."
+                      value={step4.additionalRequirements}
+                      onChange={(e) => setStep4({ ...step4, additionalRequirements: e.target.value })}
+                      rows={6}
+                    />
+                    <p style={styles.fieldHint}>
+                      No requirement is too small. Eric reviews every note before the consultation.
+                    </p>
+                  </div>
+                </div>
+              </div>
+  
+              <div style={styles.navRow}>
+                <button style={styles.backBtn} onClick={() => setCurrentStep(3)} type="button">
+                  ← Back
+                </button>
+                <button
+                  style={{
+                    ...styles.continueBtn,
+                    background: GOLD,
+                    color: "#000",
+                    cursor: "pointer",
+                  }}
+                  type="button"
+                  onClick={() => setCurrentStep(5)}
+                >
+                  Continue → <span style={styles.continueSub}>Estimate</span>
+                </button>
+              </div>
+            </>
+          )}
 
       </div>
 
