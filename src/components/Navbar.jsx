@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 
 const GOLD = "#D4A017"
 const BORDER = "rgba(212,160,23,0.2)"
@@ -15,6 +15,7 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -48,26 +49,29 @@ export default function Navbar() {
         <span style={styles.navLogoText}>PYDesignHK</span>
       </div>
       <div style={styles.navLinks}>
-        {NAV_LINKS.map((link) => (
-          <a
-            key={link.label}
-            href={link.path}
-            style={{
-              ...styles.navLink,
-              color: link.label === "Cost Estimator" ? GOLD : TEXT_DIM,
-              borderBottom: link.label === "Cost Estimator" ? `1px solid ${GOLD}` : "none",
-              paddingBottom: link.label === "Cost Estimator" ? "2px" : "0",
-            }}
-            onClick={(e) => {
-              if (link.path !== "#") {
-                e.preventDefault()
-                navigate(link.path)
-              }
-            }}
-          >
-            {link.label}
-          </a>
-        ))}
+        {NAV_LINKS.map((link) => {
+          const isActive = link.path !== "#" && location.pathname === link.path
+          return (
+            <a
+              key={link.label}
+              href={link.path}
+              style={{
+                ...styles.navLink,
+                color: isActive ? GOLD : TEXT_DIM,
+                borderBottom: isActive ? `1px solid ${GOLD}` : "none",
+                paddingBottom: isActive ? "2px" : "0",
+              }}
+              onClick={(e) => {
+                if (link.path !== "#") {
+                  e.preventDefault()
+                  navigate(link.path)
+                }
+              }}
+            >
+              {link.label}
+            </a>
+          )
+        })}
       </div>
       <button
         onClick={handleAuthBtn}
