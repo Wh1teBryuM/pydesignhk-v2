@@ -1040,7 +1040,7 @@ async function handleSubmit() {
                 <div style={styles.sectionBody}>
                   <h2 style={styles.sectionTitle}>Your Estimate</h2>
                   <p style={styles.sectionSub}>
-                    Indicative figures based on your inputs. Final pricing is confirmed after Eric's site visit.
+                    Indicative figures based on your selected material grades and site conditions. Final pricing is confirmed after Eric's site visit.
                   </p>
  
                   {/* BOQ table */}
