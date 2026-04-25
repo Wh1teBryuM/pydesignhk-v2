@@ -17,6 +17,7 @@ export default function App() {
         <Route path="/quote" element={<Quote />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/track-project" element={<TrackProject />} />
       </Routes>
     </BrowserRouter>
   )
