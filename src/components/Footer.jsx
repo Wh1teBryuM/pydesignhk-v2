@@ -8,9 +8,15 @@ export default function Footer() {
       <div style={styles.footerGrid}>
         <div style={styles.footerCol}>
           <p style={styles.footerBrand}>PYDesignHK</p>
-          <p style={styles.footerTagline}>Built for permanence.</p>
+          <p style={styles.footerTagline}>Hong Kong's premier interior construction and design firm, crafting spaces that endure, built for permanence.</p>
           <p style={styles.footerDesc}>
-            Hong Kong's premier interior construction and design firm, crafting spaces that endure.
+            📞 +852 9391 8235
+          </p>
+          <p style={styles.footerDesc}>
+            ✉️ pyrenovationco@gmail.com
+          </p>
+          <p style={styles.footerDesc}>
+            Room 2, 12th Floor, Wah Fu Industrial & Commercial Centre, 30 Shing Yip Street, Kwun Tong, Hong Kong
           </p>
         </div>
         <div style={styles.footerCol}>
@@ -21,17 +27,17 @@ export default function Footer() {
         </div>
         <div style={styles.footerCol}>
           <p style={styles.footerColTitle}>CONNECT</p>
-          {["Instagram", "LinkedIn", "WhatsApp", "Email Us"].map(link => (
+          {["Instagram", "Facebook", "WhatsApp", "Email Us"].map(link => (
             <a key={link} href="#" style={styles.footerLink}>{link}</a>
           ))}
         </div>
         <div style={styles.footerCol}>
-          <p style={styles.footerColTitle}>NEWSLETTER</p>
-          <p style={styles.footerDesc}>Stay updated on our latest projects and insights.</p>
+          <p style={styles.footerColTitle}>STAY UPDATED</p>
+          <p style={styles.footerDesc}>Stay in the loop with our latest projects, design insights, and exclusive offers.</p>
           <div style={styles.newsletterRow}>
             <input
               type="email"
-              placeholder="your@email.com"
+              placeholder="name@email.com"
               style={styles.newsletterInput}
             />
             <button style={styles.newsletterBtn}>→</button>
@@ -39,7 +45,7 @@ export default function Footer() {
         </div>
       </div>
       <div style={styles.footerBottom}>
-        <p style={styles.footerCopy}>© 2024 PYDESIGNHK. ALL RIGHTS RESERVED.</p>
+        <p style={styles.footerCopy}>© 2026 PYDESIGNHK. ALL RIGHTS RESERVED.</p>
         <div style={styles.footerBottomLinks}>
           <a href="#" style={styles.footerSmallLink}>PRIVACY</a>
           <a href="#" style={styles.footerSmallLink}>TERMS</a>

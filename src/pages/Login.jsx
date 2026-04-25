@@ -1,6 +1,17 @@
-import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { useState, useEffect } from "react";
+
+const animationStyles = `
+  @keyframes slideInLeft {
+    from { transform: translateX(-60px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+  }
+  @keyframes fadeInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+`
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -8,6 +19,15 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [currentImage, setCurrentImage] = useState(0);
+  const images = ["bedroom.png", "loginimage2.jpg", "loginimage3.jpg", "loginimage4.webp"];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % images.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -20,7 +40,6 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      console.log("Login response:", data);
       if (!res.ok) {
         setError(data.error || "Login failed");
       } else {
@@ -37,12 +56,12 @@ export default function LoginPage() {
 
   return (
     <div style={styles.root}>
+      <style>{animationStyles}</style>
       <Navbar />
 
-      {/* Main */}
       <div style={styles.main}>
-        {/* Left panel — image */}
-        <div style={styles.leftPanel}>
+        {/* Left panel */}
+        <div style={{ ...styles.leftPanel, backgroundImage: `url('${images[currentImage]}')`, transition: "background-image 1s ease-in-out", }}>
           <div style={styles.leftOverlay} />
           <div style={styles.leftContent}>
             <p style={styles.leftTagline}>Architectural Excellence.</p>
@@ -53,109 +72,88 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Right panel — form */}
+        {/* Right panel */}
         <div style={styles.rightPanel}>
           <div style={styles.formWrap}>
-            <h1 style={styles.heading}>Welcome Back</h1>
-            <p style={styles.subheading}>
-              Access your project dashboard and cost estimators.
-            </p>
+
+            <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.1s" }}>
+              <h1 style={styles.heading}>Welcome Back</h1>
+              <p style={styles.subheading}>
+                Sign in to continue your renovation journey with PYDesignHK
+              </p>
+            </div>
 
             <form onSubmit={handleSubmit} style={styles.form}>
-              {/* Email */}
-              <div style={styles.fieldGroup}>
-                <label style={styles.label}>EMAIL ADDRESS</label>
-                <div style={styles.inputWrap}>
-                  <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
-                  <input
-                    type="email"
-                    placeholder="name@gmail.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    style={styles.input}
-                  />
+
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.25s" }}>
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label}>EMAIL ADDRESS</label>
+                  <div style={styles.inputWrap}>
+                    <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/></svg>
+                    <input
+                      type="email"
+                      placeholder="name@gmail.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      style={styles.input}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Password */}
-              <div style={styles.fieldGroup}>
-                <div style={styles.labelRow}>
-                  <label style={styles.label}>PASSWORD</label>
-                  <a href="#" style={styles.forgot}>
-                    FORGOT?
-                  </a>
-                </div>
-                <div style={styles.inputWrap}>
-                  <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    placeholder="••••••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    style={styles.input}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={styles.eyeBtn}
-                  >
-                    {showPassword ? (
-  <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-    <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-    <line x1="1" y1="1" x2="23" y2="23"/>
-  </svg>
-) : (
-  <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-    <circle cx="12" cy="12" r="3"/>
-  </svg>
-)}
-                  </button>
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.4s" }}>
+                <div style={styles.fieldGroup}>
+                  <div style={styles.labelRow}>
+                    <label style={styles.label}>PASSWORD</label>
+                    <a href="#" style={styles.forgot}>Forgot password?</a>
+                  </div>
+                  <div style={styles.inputWrap}>
+                    <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      style={styles.input}
+                    />
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+                      {showPassword ? (
+                        <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                          <line x1="1" y1="1" x2="23" y2="23"/>
+                        </svg>
+                      ) : (
+                        <svg style={{width:16,height:16,color:'rgba(255,255,255,0.45)'}} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
               {error && <p style={styles.errorMsg}>{error}</p>}
 
-              {/* Submit */}
-              <button type="submit" style={styles.submitBtn} disabled={loading}>
-                {loading ? "AUTHENTICATING..." : "AUTHENTICATE →"}
-              </button>
-
-              {/* Divider */}
-              <div style={styles.divider}>
-                <span style={styles.dividerLine} />
-                <span style={styles.dividerText}>OR CONTINUE WITH</span>
-                <span style={styles.dividerLine} />
-              </div>
-
-              {/* Social */}
-              <div style={styles.socialRow}>
-                <button type="button" style={styles.socialBtn}>
-                  <span style={styles.socialIcon}>G</span> GOOGLE
-                </button>
-                <button type="button" style={styles.socialBtn}>
-                  <span style={styles.socialIcon}>🔑</span> SSO
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.55s" }}>
+                <button type="submit" style={styles.submitBtn} disabled={loading}>
+                  {loading ? "Signing In..." : "Sign In →"}
                 </button>
               </div>
+
             </form>
 
-            <p style={styles.registerRow}>
-              New to P&Y Interior?{" "}
-              <a href="/register" style={styles.registerLink}>
-                Initialize Project Profile
-              </a>
-            </p>
-          </div>
+            <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.7s" }}>
+              <p style={styles.registerRow}>
+                New to PYDesignHK?{" "}
+                <a href="/register" style={styles.registerLink}>Create an account</a>
+              </p>
+            </div>
 
-          <p style={styles.footerText}>
-            © 2024 PYDESIGNHK. BUILT FOR PERMANENCE.
-            <span style={styles.footerLinks}>
-              &nbsp;&nbsp;PRIVACY &nbsp;&nbsp;LEGAL
-            </span>
-          </p>
+          </div>
         </div>
       </div>
       <Footer />
@@ -164,7 +162,6 @@ export default function LoginPage() {
 }
 
 const GOLD = "#D4A017";
-const GOLD_HOVER = "#F0B820";
 const BG_DARK = "#0f0f0f";
 const BG_PANEL = "#141414";
 const BORDER = "rgba(212,160,23,0.2)";
@@ -180,29 +177,26 @@ const styles = {
     display: "flex",
     flexDirection: "column",
   },
-
   main: {
     display: "flex",
     flex: 1,
     minHeight: "calc(100vh - 64px)",
   },
   leftPanel: {
-    flex: '0 0 45%',
-    background: `linear-gradient(135deg, #0a0a0a 0%, #1a1510 100%)`,
+    flex: "0 0 45%",
     position: "relative",
     display: "flex",
     alignItems: "flex-end",
     padding: "48px",
-    backgroundImage:
-      "url('bedroom.png')",
+    backgroundImage: "url('bedroom.png')",
     backgroundSize: "cover",
     backgroundPosition: "center",
+    animation: "slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both",
   },
   leftOverlay: {
     position: "absolute",
     inset: 0,
-    background:
-      "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)",
+    background: "linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)",
   },
   leftContent: {
     position: "relative",
@@ -218,7 +212,7 @@ const styles = {
     lineHeight: 1.2,
   },
   leftSub: {
-    fontSize: "14px",
+    fontSize: "17px",
     color: TEXT_DIM,
     lineHeight: 1.7,
     margin: 0,
@@ -229,16 +223,15 @@ const styles = {
     background: BG_PANEL,
     display: "flex",
     flexDirection: "column",
-    justifyContent: "space-between",
-    padding: "64px 56px 32px",
+    justifyContent: "center",
+    padding: "64px 56px",
     borderLeft: `1px solid ${BORDER}`,
   },
   formWrap: {
-  flex: 1,
-  maxWidth: '420px',
-  width: '100%',
-  margin: '0 auto',
-},
+    maxWidth: "420px",
+    width: "100%",
+    margin: "0 auto",
+  },
   heading: {
     fontSize: "32px",
     fontWeight: "400",
@@ -247,9 +240,10 @@ const styles = {
     letterSpacing: "-0.01em",
   },
   subheading: {
-    fontSize: "14px",
+    fontSize: "15px",
     color: TEXT_MUTED,
-    margin: "0 0 40px",
+    margin: "5px 0 40px",
+    paddingTop: "10px",
   },
   form: {
     display: "flex",
@@ -281,16 +275,10 @@ const styles = {
     display: "flex",
     alignItems: "center",
     background: "rgba(255,255,255,0.04)",
-    border: `1px solid rgba(255,255,255,0.1)`,
+    border: "1px solid rgba(255,255,255,0.1)",
     padding: "0 14px",
     height: "48px",
     gap: "10px",
-    transition: "border-color 0.2s",
-  },
-  inputIcon: {
-    fontSize: "14px",
-    color: TEXT_MUTED,
-    flexShrink: 0,
   },
   input: {
     flex: 1,
@@ -305,7 +293,6 @@ const styles = {
     background: "none",
     border: "none",
     cursor: "pointer",
-    fontSize: "14px",
     color: TEXT_MUTED,
     padding: 0,
   },
@@ -319,51 +306,12 @@ const styles = {
     color: "#000",
     border: "none",
     height: "52px",
-    fontSize: "13px",
+    width: "100%",
+    fontSize: "18px",
     letterSpacing: "0.14em",
     fontWeight: "600",
     cursor: "pointer",
-    transition: "background 0.2s",
     fontFamily: "inherit",
-  },
-  divider: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  dividerLine: {
-    flex: 1,
-    height: "1px",
-    background: "rgba(255,255,255,0.08)",
-    display: "block",
-  },
-  dividerText: {
-    fontSize: "11px",
-    color: TEXT_MUTED,
-    letterSpacing: "0.1em",
-    whiteSpace: "nowrap",
-  },
-  socialRow: {
-    display: "flex",
-    gap: "12px",
-  },
-  socialBtn: {
-    flex: 1,
-    height: "46px",
-    background: "rgba(255,255,255,0.04)",
-    border: `1px solid rgba(255,255,255,0.1)`,
-    color: TEXT_DIM,
-    fontSize: "12px",
-    letterSpacing: "0.1em",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "8px",
-    fontFamily: "inherit",
-  },
-  socialIcon: {
-    fontSize: "14px",
   },
   registerRow: {
     marginTop: "32px",
@@ -375,15 +323,5 @@ const styles = {
     color: GOLD,
     textDecoration: "none",
     fontStyle: "italic",
-  },
-  footerText: {
-  fontSize: "11px",
-  color: "rgba(255,255,255,0.2)",
-  letterSpacing: "0.06em",
-  marginTop: "32px",
-  textAlign: "center",
-},
-  footerLinks: {
-    color: "rgba(255,255,255,0.2)",
   },
 };
