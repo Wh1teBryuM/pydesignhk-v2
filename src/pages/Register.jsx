@@ -1,7 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+
+const animationStyles = `
+  @keyframes fadeInUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  @keyframes slideInLeft {
+    from { transform: translateX(-60px); opacity: 0; }
+    to   { transform: translateX(0);     opacity: 1; }
+  }
+`
 
 const NAV_LINKS = ["Home", "Services", "Cost Estimator", "Track Project"];
 
@@ -45,12 +56,13 @@ export default function RegisterPage() {
 
   return (
     <div style={styles.root}>
+      <style>{animationStyles}</style>
       <Navbar />
 
       {/* Main */}
       <div style={styles.main}>
         {/* Left panel */}
-        <div style={styles.leftPanel}>
+        <div style={{ ...styles.leftPanel, animation: "slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both" }}>
           <div style={styles.leftOverlay} />
           <div style={styles.leftContent}>
             <p style={styles.leftTag}>BESPOKE EXCELLENCE</p>
@@ -68,115 +80,75 @@ export default function RegisterPage() {
         {/* Right panel */}
         <div style={styles.rightPanel}>
           <div style={styles.formWrap}>
-            <h1 style={styles.heading}>Initialize Project Profile</h1>
-            <p style={styles.subheading}>
-              Enter your details to access your construction dashboard and
-              project timeline.
-            </p>
+            <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.1s" }}>
+              <h1 style={styles.heading}>Create an Account</h1>
+              <p style={styles.subheading}>Sign up to track your renovation project with PYDesignHK.</p>
+            </div>
 
             <form onSubmit={handleSubmit} style={styles.form}>
-              {/* Full Name */}
-              <div style={styles.fieldGroup}>
-                <label style={styles.label}>FULL NAME</label>
-                <div style={styles.inputWrap}>
-                  <input
-                    type="text"
-                    placeholder="Peter Lau"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                    style={styles.input}
-                  />
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.25s" }}>
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label}>FULL NAME</label>
+                  <div style={styles.inputWrap}>
+                    <input type="text" placeholder="Peter Lau" value={fullName} onChange={(e) => setFullName(e.target.value)} required style={styles.input} />
+                  </div>
                 </div>
               </div>
 
               {/* Email */}
-              <div style={styles.fieldGroup}>
-                <label style={styles.label}>EMAIL ADDRESS</label>
-                <div style={styles.inputWrap}>
-                  <input
-                    type="email"
-                    placeholder="name@gmail.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    style={styles.input}
-                  />
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.4s" }}>
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label}>EMAIL ADDRESS</label>
+                  <div style={styles.inputWrap}>
+                    <input type="email" placeholder="name@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} required style={styles.input} />
+                  </div>
                 </div>
               </div>
 
               {/* Password */}
-              <div style={styles.fieldGroup}>
-                <label style={styles.label}>SECURITY KEY (PASSWORD)</label>
-                <div style={styles.inputWrap}>
-                  <input
-                    type="password"
-                    placeholder="••••••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    style={styles.input}
-                  />
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.55s" }}>
+                <div style={styles.fieldGroup}>
+                  <label style={styles.label}>PASSWORD</label>
+                  <div style={styles.inputWrap}>
+                    <input type="password" placeholder="••••••••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required style={styles.input} />
+                  </div>
                 </div>
               </div>
 
+
               {/* Checkbox */}
-              <div style={styles.checkboxWrap}>
-                <input
-                  type="checkbox"
-                  id="terms"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  style={styles.checkbox}
-                />
-                <label htmlFor="terms" style={styles.checkboxLabel}>
-                  I acknowledge the{" "}
-                  <a href="#" style={styles.termsLink}>
-                    Terms of Engagement
-                  </a>{" "}
-                  and consent to the digital handling of project blueprints and
-                  contracts.
-                </label>
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.7s" }}>
+                <div style={styles.checkboxWrap}>
+                  <input type="checkbox" id="terms" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} style={styles.checkbox} />
+                  <label htmlFor="terms" style={styles.checkboxLabel}>
+                    I acknowledge the{" "}
+                    <a href="#" style={styles.termsLink}>Terms of Engagement</a>{" "}
+                    and consent to the digital handling of project blueprints and contracts.
+                  </label>
+                </div>
               </div>
 
               {error && <p style={styles.errorMsg}>{error}</p>}
 
               {/* Submit */}
-              <button type="submit" style={styles.submitBtn} disabled={loading}>
-                {loading ? "CREATING PROFILE..." : "CREATE PROFILE"}
-              </button>
-
-              {/* Divider */}
-              <div style={styles.existingWrap}>
-                <p style={styles.existingText}>EXISTING PARTNER?</p>
-                <button
-                  type="button"
-                  style={styles.accessBtn}
-                  onClick={() => navigate("/login")}
-                >
-                  ACCESS YOUR ACCOUNT
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "0.85s" }}>
+                <button type="submit" style={styles.submitBtn} disabled={loading}>
+                  {loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
                 </button>
               </div>
 
-              <p style={styles.troubleText}>
-                Having trouble?{" "}
-                <a href="#" style={styles.troubleLink}>
-                  Contact Site Office
-                </a>
-              </p>
+              {/* Divider */}
+              <div style={{ animation: "fadeInUp 0.5s ease both", animationDelay: "1s" }}>
+                <div style={styles.existingWrap}>
+                  <p style={styles.existingText}>Already have an account?</p>
+                  <button type="button" style={styles.accessBtn} onClick={() => navigate("/login")}>SIGN IN</button>
+                </div>
+              </div>
+
             </form>
           </div>
 
           {/* Footer */}
-          <div style={styles.footer}>
-            <p style={styles.footerBrand}>PYDesignHK Ltd.</p>
-            <div style={styles.footerLinks}>
-              <a href="#" style={styles.footerLink}>TERMS OF SERVICE</a>
-              <a href="#" style={styles.footerLink}>PRIVACY POLICY</a>
-              <a href="#" style={styles.footerLink}>CONTACT SUPPORT</a>
-            </div>
-            <p style={styles.footerCopy}>© 2024 PYDESIGNHK. CRAFTED FOR PERMANENCE.</p>
-          </div>
         </div>
       </div>
       <Footer />
@@ -298,7 +270,7 @@ const styles = {
     background: BG_PANEL,
     display: "flex",
     flexDirection: "column",
-    justifyContent: "space-between",
+    justifyContent: "center",
     padding: "64px 56px 32px",
     borderLeft: `1px solid ${BORDER}`,
     minHeight: "calc(100vh - 64px)",
@@ -317,10 +289,11 @@ const styles = {
     letterSpacing: "-0.01em",
   },
   subheading: {
-    fontSize: "14px",
+    fontSize: "15px",
     color: TEXT_MUTED,
     margin: "0 0 40px",
     lineHeight: 1.6,
+    paddingTop: "10px",
   },
   form: {
     display: "flex",
