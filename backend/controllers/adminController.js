@@ -101,6 +101,9 @@ const getInquiries = async (req, res) => {
       .from('inquiries')
       .select(`
         id,
+        contact_full_name,
+        contact_phone,
+        contact_email,
         preferred_contact_method,
         additional_notes,
         submitted_at,
@@ -120,14 +123,15 @@ const getInquiries = async (req, res) => {
     if (error) throw error
 
     const inquiries = data.map((inq) => ({
-      inquiry_id:               inq.id,
-      preferred_contact_method: inq.preferred_contact_method,
-      additional_notes:         inq.additional_notes,
-      submitted_at:             inq.submitted_at,
-      contact_full_name:        inq.customers?.full_name,
-      contact_email:            inq.customers?.email,
-      ...inq.projects,
-    }))
+    inquiry_id:               inq.id,
+    preferred_contact_method: inq.preferred_contact_method,
+    additional_notes:         inq.additional_notes,
+    submitted_at:             inq.submitted_at,
+    contact_full_name:        inq.contact_full_name,
+    contact_phone:            inq.contact_phone,
+    contact_email:            inq.contact_email,
+    ...inq.projects,
+  }))
 
     res.json({ inquiries })
 

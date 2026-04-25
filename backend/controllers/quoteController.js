@@ -109,13 +109,16 @@ const submitQuote = async (req, res) => {
 
     // ── 5. Insert into inquiries table ──
     const { error: inquiryError } = await supabase
-      .from('inquiries')
-      .insert({
-        project_id:               project.id,
-        customer_id,
-        preferred_contact_method,
-        additional_notes:         inquiry_notes || null,
-      })
+  .from('inquiries')
+  .insert({
+    project_id:               project.id,
+    customer_id,
+    preferred_contact_method,
+    additional_notes:         inquiry_notes || null,
+    contact_phone,
+    contact_full_name,
+    contact_email,
+  })
 
     if (inquiryError) throw inquiryError
 

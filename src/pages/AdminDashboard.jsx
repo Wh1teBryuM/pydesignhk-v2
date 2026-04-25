@@ -70,6 +70,7 @@ export default function AdminDashboard() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to fetch inquiries")
+        console.log(data.inquiries)
       setInquiries(data.inquiries || [])
     } catch (err) {
       setError(err.message)
