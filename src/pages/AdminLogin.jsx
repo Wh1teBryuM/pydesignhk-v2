@@ -41,7 +41,7 @@ export default function AdminLogin() {
 
       localStorage.setItem("adminToken", data.token)
       localStorage.setItem("admin", JSON.stringify(data.admin))
-      navigate("/admin/dashboard")
+      window.location.href = "/admin/dashboard"
 
     } catch (err) {
       setError("Network error. Please check your connection.")

@@ -83,5 +83,57 @@ const logoutAdmin = async (req, res) => {
     res.status(500).json({ error: error.message })
   }
 }
+
+const getInquiries = async (req, res) => {
+  try {
+    const token = req.headers['authorization']
+    if (!token) return res.status(401).json({ error: 'Not authenticated' })
+
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('customer_id')
+      .eq('token', token)
+      .single()
+
+    if (sessionError || !session) return res.status(401).json({ error: 'Invalid session' })
+
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select(`
+        id,
+        preferred_contact_method,
+        additional_notes,
+        submitted_at,
+        projects (
+          priority_profile, property_type, district, building_age,
+          saleable_area_sqft, bedroom_count, bathroom_count,
+          kitchen_count, living_room_count, estate_name, block,
+          floor, flat, street, lift_access, has_stairs, has_parking,
+          site_remarks, renovation_scope, additional_requirements
+        ),
+        customers (
+          full_name, email
+        )
+      `)
+      .order('submitted_at', { ascending: false })
+
+    if (error) throw error
+
+    const inquiries = data.map((inq) => ({
+      inquiry_id:               inq.id,
+      preferred_contact_method: inq.preferred_contact_method,
+      additional_notes:         inq.additional_notes,
+      submitted_at:             inq.submitted_at,
+      contact_full_name:        inq.customers?.full_name,
+      contact_email:            inq.customers?.email,
+      ...inq.projects,
+    }))
+
+    res.json({ inquiries })
+
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+}
  
-module.exports = { loginAdmin, logoutAdmin }
+module.exports = { loginAdmin, logoutAdmin, getInquiries }
