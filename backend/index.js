@@ -5,6 +5,8 @@ const { createClient } = require('@supabase/supabase-js')
 const authRoutes = require('./routes/authRoutes')
 const authMiddleware = require('./middleware/authMiddleware')
 const quoteRoutes = require('./routes/quoteRoutes') 
+const adminRoutes = require('./routes/adminRoutes')
+
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -17,7 +19,8 @@ const supabase = createClient(
 app.use(cors())
 app.use(express.json())
 app.use('/auth', authRoutes)
-app.use('/quote', quoteRoutes)      
+app.use('/quote', quoteRoutes)     
+app.use('/admin', adminRoutes) 
 
 app.get('/test', (req, res) => {
   res.json({ message: 'Backend is running' })
