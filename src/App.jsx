@@ -5,6 +5,7 @@ import Home from './pages/Home'
 import Quote from './pages/Quote'
 import AdminLogin from "./pages/AdminLogin"
 import AdminDashboard from "./pages/AdminDashboard"
+import TrackProject from './pages/TrackProject'
 
 
 export default function App() {

@@ -9,7 +9,7 @@ const NAV_LINKS = [
   { label: "Home", path: "/" },
   { label: "Services", path: "#" },
   { label: "Cost Estimator", path: "/quote" },
-  { label: "Track Project", path: "#" },
+  { label: "Track Project", path: "/track-project" },
 ]
 
 export default function Navbar() {
