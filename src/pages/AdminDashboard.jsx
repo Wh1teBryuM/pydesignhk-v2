@@ -39,6 +39,314 @@ function formatDate(ts) {
   })
 }
 
+function TrackerTab({ adminToken }) {
+  const [projects,       setProjects]       = useState([])
+  const [loading,        setLoading]        = useState(true)
+  const [error,          setError]          = useState("")
+  const [expandedId,     setExpandedId]     = useState(null)
+  const [showModal,      setShowModal]      = useState(false)
+  const [creating,       setCreating]       = useState(false)
+  const [form,           setForm]           = useState({
+    customer_email: "", project_name: "", status: "confirmed",
+    start_date: "", end_date: "", estimated_cost: "", actual_cost: "",
+    zones: "",
+  })
+
+  // Update modal
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const [selectedZone,    setSelectedZone]    = useState(null)
+  const [updateNote,      setUpdateNote]      = useState("")
+  const [updatePhotos,    setUpdatePhotos]    = useState([])
+  const [submittingUpdate, setSubmittingUpdate] = useState(false)
+
+  useEffect(() => { fetchProjects() }, [])
+
+  async function fetchProjects() {
+    setLoading(true)
+    setError("")
+    try {
+      const res  = await fetch("http://localhost:3001/tracker/admin/projects", {
+        headers: { authorization: adminToken },
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to fetch projects")
+      setProjects(data.projects || [])
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleCreateProject() {
+    setCreating(true)
+    try {
+      const zones = form.zones.split(",").map(z => z.trim()).filter(Boolean)
+      const res   = await fetch("http://localhost:3001/tracker/admin/projects", {
+        method:  "POST",
+        headers: { authorization: adminToken, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_email:  form.customer_email,
+          project_name:    form.project_name,
+          status:          form.status,
+          start_date:      form.start_date      || null,
+          end_date:        form.end_date        || null,
+          estimated_cost:  form.estimated_cost  ? parseFloat(form.estimated_cost)  : null,
+          actual_cost:     form.actual_cost     ? parseFloat(form.actual_cost)     : null,
+          zones,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to create project")
+      setShowModal(false)
+      setForm({ customer_email: "", project_name: "", status: "confirmed", start_date: "", end_date: "", estimated_cost: "", actual_cost: "", zones: "" })
+      fetchProjects()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function handleAddUpdate() {
+    if (!selectedZone) return
+    setSubmittingUpdate(true)
+    try {
+      // 1. Create update
+      const res  = await fetch(`http://localhost:3001/tracker/admin/zones/${selectedZone.id}/updates`, {
+        method:  "POST",
+        headers: { authorization: adminToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ note: updateNote }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to add update")
+
+      const updateId = data.update.id
+
+      // 2. Upload photos
+      for (let i = 0; i < updatePhotos.length; i++) {
+        const formData = new FormData()
+        formData.append("photo", updatePhotos[i])
+        formData.append("display_order", i)
+        await fetch(`http://localhost:3001/tracker/admin/updates/${updateId}/photos`, {
+          method:  "POST",
+          headers: { authorization: adminToken },
+          body:    formData,
+        })
+      }
+
+      setShowUpdateModal(false)
+      setUpdateNote("")
+      setUpdatePhotos([])
+      setSelectedZone(null)
+      fetchProjects()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setSubmittingUpdate(false)
+    }
+  }
+
+  const STATUS_COLORS = {
+    confirmed:   "#4CAF50",
+    in_progress: GOLD,
+    completed:   "#2196F3",
+    cancelled:   "#f44336",
+  }
+
+  const STATUS_LABELS = {
+    confirmed:   "Confirmed",
+    in_progress: "In Progress",
+    completed:   "Completed",
+    cancelled:   "Cancelled",
+  }
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={styles.contentHeader}>
+        <div>
+          <h2 style={styles.contentTitle}>Project Tracker</h2>
+          <p style={styles.contentSub}>Manage active renovation projects for paying customers.</p>
+        </div>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button style={styles.refreshBtn} onClick={fetchProjects} type="button">↻ Refresh</button>
+          <button style={{ ...styles.refreshBtn, borderColor: GOLD, color: GOLD }} onClick={() => setShowModal(true)} type="button">+ New Project</button>
+        </div>
+      </div>
+
+      {loading && <div style={styles.stateMsg}>Loading projects...</div>}
+      {error   && <div style={styles.errorBox}>{error}</div>}
+
+      {!loading && !error && projects.length === 0 && (
+        <div style={styles.emptyState}>
+          <p style={styles.emptyIcon}>✦</p>
+          <p style={styles.emptyText}>No projects yet.</p>
+        </div>
+      )}
+
+      {/* Project list */}
+      {!loading && !error && projects.map((proj) => (
+        <div key={proj.id} style={{ marginBottom: "16px", border: `1px solid ${BORDER_SUBTLE}` }}>
+          {/* Project header row */}
+          <div
+            style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", cursor: "pointer", background: expandedId === proj.id ? BG_PANEL2 : "transparent" }}
+            onClick={() => setExpandedId(expandedId === proj.id ? null : proj.id)}
+          >
+            <div>
+              <p style={{ margin: "0 0 4px", fontSize: "15px", color: "#fff" }}>{proj.project_name}</p>
+              <p style={{ margin: 0, fontSize: "12px", color: TEXT_MUTED }}>{proj.customers?.full_name} · {proj.customers?.email}</p>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <span style={{ fontSize: "11px", padding: "4px 10px", border: `1px solid ${STATUS_COLORS[proj.status]}`, color: STATUS_COLORS[proj.status] }}>
+                {STATUS_LABELS[proj.status]}
+              </span>
+              <span style={{ color: TEXT_MUTED, fontSize: "12px" }}>{expandedId === proj.id ? "▲" : "▼"}</span>
+            </div>
+          </div>
+
+          {/* Expanded */}
+          {expandedId === proj.id && (
+            <div style={{ padding: "0 24px 24px", borderTop: `1px solid ${BORDER_SUBTLE}` }}>
+              {/* Project meta */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", padding: "20px 0", borderBottom: `1px solid ${BORDER_SUBTLE}`, marginBottom: "24px" }}>
+                {[
+                  { label: "START DATE",       value: proj.start_date     || "—" },
+                  { label: "END DATE",         value: proj.end_date       || "—" },
+                  { label: "ESTIMATED COST",   value: proj.estimated_cost ? `HKD $${Number(proj.estimated_cost).toLocaleString()}` : "—" },
+                  { label: "ACTUAL COST",      value: proj.actual_cost    ? `HKD $${Number(proj.actual_cost).toLocaleString()}`    : "—" },
+                ].map((item) => (
+                  <div key={item.label}>
+                    <p style={styles.expandedLabel}>{item.label}</p>
+                    <p style={{ ...styles.expandedValue, color: "#fff" }}>{item.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Zones */}
+              {proj.tracker_zones?.sort((a, b) => a.display_order - b.display_order).map((zone) => (
+                <div key={zone.id} style={{ marginBottom: "24px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+                    <p style={{ ...styles.expandedLabel, margin: 0 }}>{zone.zone_name.toUpperCase()}</p>
+                    <button
+                      type="button"
+                      style={{ background: "transparent", border: `1px solid ${BORDER}`, color: GOLD, fontSize: "11px", padding: "4px 12px", cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.08em" }}
+                      onClick={() => { setSelectedZone(zone); setShowUpdateModal(true) }}
+                    >
+                      + Add Update
+                    </button>
+                  </div>
+
+                  {zone.tracker_updates?.length === 0 && (
+                    <p style={{ fontSize: "12px", color: TEXT_MUTED }}>No updates yet.</p>
+                  )}
+
+                  {zone.tracker_updates?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map((update) => (
+                    <div key={update.id} style={{ marginBottom: "16px", paddingLeft: "12px", borderLeft: `2px solid ${BORDER}` }}>
+                      <p style={{ fontSize: "11px", color: TEXT_MUTED, margin: "0 0 4px" }}>{formatDate(update.created_at)}</p>
+                      {update.note && <p style={{ fontSize: "13px", color: TEXT_DIM, margin: "0 0 8px" }}>{update.note}</p>}
+                      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                        {update.tracker_photos?.sort((a, b) => a.display_order - b.display_order).map((photo) => (
+                          <img key={photo.id} src={photo.photo_url} alt="update" style={{ width: "120px", height: "90px", objectFit: "cover", border: `1px solid ${BORDER_SUBTLE}` }} />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Create Project Modal */}
+      {showModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: BG_PANEL, border: `1px solid ${BORDER}`, padding: "32px", width: "480px", maxHeight: "90vh", overflowY: "auto" }}>
+            <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, color: "#fff", margin: "0 0 24px", fontSize: "18px" }}>New Project</h3>
+            {[
+              { label: "Customer Email *", key: "customer_email", type: "text" },
+              { label: "Project Name *",   key: "project_name",   type: "text" },
+              { label: "Start Date",       key: "start_date",     type: "date" },
+              { label: "End Date",         key: "end_date",       type: "date" },
+              { label: "Estimated Cost (HKD)", key: "estimated_cost", type: "number" },
+              { label: "Actual Cost (HKD)",    key: "actual_cost",    type: "number" },
+              { label: "Zones (comma separated)", key: "zones",    type: "text" },
+            ].map((field) => (
+              <div key={field.key} style={{ marginBottom: "16px" }}>
+                <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>{field.label}</p>
+                <input
+                  type={field.type}
+                  value={form[field.key]}
+                  onChange={(e) => setForm({ ...form, [field.key]: e.target.value })}
+                  style={{ width: "100%", background: BG_DARK, border: `1px solid ${BORDER}`, color: "#fff", padding: "10px 12px", fontSize: "13px", fontFamily: "inherit", boxSizing: "border-box" }}
+                />
+              </div>
+            ))}
+            <div style={{ marginBottom: "24px" }}>
+              <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>STATUS *</p>
+              <select
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                style={{ width: "100%", background: BG_DARK, border: `1px solid ${BORDER}`, color: "#fff", padding: "10px 12px", fontSize: "13px", fontFamily: "inherit" }}
+              >
+                <option value="confirmed">Confirmed</option>
+                <option value="in_progress">In Progress</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => setShowModal(false)} style={{ ...styles.refreshBtn, cursor: "pointer" }}>Cancel</button>
+              <button type="button" onClick={handleCreateProject} disabled={creating} style={{ ...styles.refreshBtn, borderColor: GOLD, color: GOLD, cursor: "pointer" }}>
+                {creating ? "Creating..." : "Create Project"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Update Modal */}
+      {showUpdateModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: BG_PANEL, border: `1px solid ${BORDER}`, padding: "32px", width: "480px" }}>
+            <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, color: "#fff", margin: "0 0 8px", fontSize: "18px" }}>Add Update</h3>
+            <p style={{ fontSize: "12px", color: TEXT_MUTED, margin: "0 0 24px" }}>{selectedZone?.zone_name}</p>
+            <div style={{ marginBottom: "16px" }}>
+              <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>NOTE</p>
+              <textarea
+                value={updateNote}
+                onChange={(e) => setUpdateNote(e.target.value)}
+                rows={4}
+                style={{ width: "100%", background: BG_DARK, border: `1px solid ${BORDER}`, color: "#fff", padding: "10px 12px", fontSize: "13px", fontFamily: "inherit", resize: "vertical", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ marginBottom: "24px" }}>
+              <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>PHOTOS</p>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => setUpdatePhotos(Array.from(e.target.files))}
+                style={{ fontSize: "12px", color: TEXT_DIM }}
+              />
+              {updatePhotos.length > 0 && (
+                <p style={{ fontSize: "11px", color: TEXT_MUTED, marginTop: "6px" }}>{updatePhotos.length} photo(s) selected</p>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => { setShowUpdateModal(false); setUpdateNote(""); setUpdatePhotos([]); setSelectedZone(null) }} style={{ ...styles.refreshBtn, cursor: "pointer" }}>Cancel</button>
+              <button type="button" onClick={handleAddUpdate} disabled={submittingUpdate} style={{ ...styles.refreshBtn, borderColor: GOLD, color: GOLD, cursor: "pointer" }}>
+                {submittingUpdate ? "Saving..." : "Save Update"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const [activeTab,   setActiveTab]   = useState("estimation")
@@ -293,14 +601,8 @@ export default function AdminDashboard() {
 
         {/* ── Project Tracker Tab ── */}
         {activeTab === "tracker" && (
-          <div style={styles.emptyState}>
-            <p style={styles.emptyIcon}>✦</p>
-            <p style={styles.emptyText}>Project Tracker — Coming Soon</p>
-            <p style={{ fontSize: "13px", color: TEXT_MUTED, marginTop: "8px" }}>
-              This feature is currently being built.
-            </p>
-          </div>
-        )}
+  <TrackerTab adminToken={localStorage.getItem("adminToken")} />
+)}
 
       </div>
     </div>
