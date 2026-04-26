@@ -77,6 +77,86 @@ const SITE_MULTIPLIERS = {
   age_16_to_30:   { zones: ["demolition", "plumbing_electrical"],                     pct: 0.05 },
   age_30_plus:    { zones: ["demolition", "plumbing_electrical"],                     pct: 0.10 },
 };
+
+const STYLE_ITEMS = {
+  flooring: {
+    label: "Flooring",
+    zh: "地板",
+    showFor: () => true, // always
+    options: [
+      { id: "light_wood", label: "Light Oak", desc: "Warm Scandinavian tone, wide plank", color: "#C8A97E" },
+      { id: "dark_wood", label: "Dark Walnut", desc: "Deep rich grain, dramatic contrast", color: "#4A3728" },
+      { id: "marble_white", label: "White Marble", desc: "Carrara-style, polished finish", color: "#F0EDE8" },
+      { id: "concrete_grey", label: "Concrete Grey", desc: "Industrial matte screed", color: "#9B9B9B" },
+    ],
+  },
+  wall_paint: {
+    label: "Wall Colour",
+    zh: "牆身顏色",
+    showFor: (scope, rooms) =>
+      scope === "full" ||
+      (scope === "partial" && rooms.some(r => ["living_room", "master_bedroom", "bedroom"].includes(r))),
+    options: [
+      { id: "warm_white", label: "Warm White", desc: "Soft off-white, timeless base", color: "#F5F0E8" },
+      { id: "sage_green", label: "Sage Green", desc: "Muted botanical, calming", color: "#8FA888" },
+      { id: "charcoal", label: "Charcoal", desc: "Deep slate, bold statement", color: "#3C3C3C" },
+      { id: "sand_beige", label: "Sand Beige", desc: "Earthy neutral, warm depth", color: "#C4B49A" },
+      { id: "dusty_blue", label: "Dusty Blue", desc: "Soft coastal, serene", color: "#7E9CAF" },
+    ],
+  },
+  kitchen_cabinet: {
+    label: "Kitchen Cabinet Finish",
+    zh: "廚櫃飾面",
+    showFor: (scope, rooms) =>
+      scope === "full" ||
+      scope === "kitchen_only" ||
+      (scope === "partial" && rooms.includes("kitchen")),
+    options: [
+      { id: "matte_white", label: "Matte White", desc: "Clean, minimal, timeless", color: "#EFEFEF" },
+      { id: "wood_veneer", label: "Wood Veneer", desc: "Natural grain, warm luxury", color: "#B8895A" },
+      { id: "slate_grey", label: "Slate Grey", desc: "Modern industrial tone", color: "#6B6B6B" },
+      { id: "navy_blue", label: "Navy Blue", desc: "Bold, sophisticated contrast", color: "#2C3E6B" },
+    ],
+  },
+  bathroom_tile: {
+    label: "Bathroom Tile Style",
+    zh: "浴室磚款",
+    showFor: (scope, rooms) =>
+      scope === "full" ||
+      scope === "bathroom_only" ||
+      (scope === "partial" && rooms.includes("bathroom")),
+    options: [
+      { id: "metro_white", label: "Metro White", desc: "Classic subway tile, clean lines", color: "#F2F2F2" },
+      { id: "terrazzo", label: "Terrazzo", desc: "Speckled stone composite, playful luxury", color: "#D4C9BC" },
+      { id: "black_hex", label: "Black Hexagon", desc: "Matte black mosaic, bold floor", color: "#222222" },
+      { id: "travertine", label: "Travertine", desc: "Natural stone texture, warm organic", color: "#C9B49A" },
+    ],
+  },
+  door_type: {
+    label: "Door Type",
+    zh: "門款",
+    showFor: (scope) => scope === "full",
+    options: [
+      { id: "solid_wood", label: "Solid Timber", desc: "Full wood panel, premium acoustic", color: "#8B6343" },
+      { id: "flush_white", label: "Flush White", desc: "Seamless painted finish, minimal", color: "#F0F0F0" },
+      { id: "glass_panel", label: "Glass Panel", desc: "Frosted insert, light and open", color: "#C8D8E0" },
+      { id: "dark_veneer", label: "Dark Veneer", desc: "Smoked oak wrap, sophisticated", color: "#3D2B1F" },
+    ],
+  },
+  bedroom_style: {
+    label: "Bedroom Style",
+    zh: "睡房風格",
+    showFor: (scope, rooms) =>
+      scope === "full" ||
+      (scope === "partial" && rooms.some(r => ["master_bedroom", "bedroom"].includes(r))),
+    options: [
+      { id: "japandi", label: "Japandi", desc: "Low frame, warm wood, paper lighting", color: "#C4AF95" },
+      { id: "modern_minimal", label: "Modern Minimal", desc: "Platform bed, recessed lighting, no clutter", color: "#D8D8D8" },
+      { id: "dark_luxe", label: "Dark Luxe", desc: "Upholstered headboard, moody ambient", color: "#2A2A35" },
+      { id: "scandinavian", label: "Scandinavian", desc: "White frame, linen, pendant warmth", color: "#EAE4DA" },
+    ],
+  },
+};
  
 // Calculation function — returns array of { id, name, subtotal } for active zones
 function calculateBOQ(step1, step2, step3) {
@@ -253,6 +333,8 @@ export default function Quote() {
 
   const [step3, setStep3] = useState(null);
 
+  const [step3Style, setStep3Style] = useState({});
+
   const [step4, setStep4] = useState({
   additionalRequirements: "",
 });
@@ -309,6 +391,7 @@ async function handleSubmit() {
       additional_zones:  step2.additionalZones,
       // Step 3
       material_grades:   step3,
+      style_preferences: step3Style,
       // Step 4
       additional_requirements: step4.additionalRequirements,
       // Step 6
@@ -834,151 +917,251 @@ async function handleSubmit() {
 
         {/* ── STEP 3 ── */}
         {currentStep === 3 && step3 !== null && (() => {
-          const activeZones = getActiveZones(step2);
-          const gradeLabels = {
-            basic:    { label: "Basic",    zh: "基本", multiplier: "1.0×", desc: "Standard local materials, functional finish" },
-            standard: { label: "Standard", zh: "中級", multiplier: "1.25×", desc: "Mid-range materials, improved durability and finish" },
-            premium:  { label: "Premium",  zh: "優質", multiplier: "1.6×",  desc: "High-end imported materials, superior longevity" },
-          };
-          const priorityNote = {
-            look_good_control_cost: "Visible zones defaulted to Standard, hidden works to Basic — adjust freely.",
-            practical_functional:   "All zones defaulted to Basic for maximum cost efficiency.",
-            full_premium:           "All zones defaulted to Premium — no compromise.",
-            quality_first:          "Structural and functional zones set to Premium, finishes to Standard.",
-          }[step1.priority] || "";
+  const activeZones = getActiveZones(step2);
+  const gradeLabels = {
+    basic:    { label: "Basic",    zh: "基本", multiplier: "1.0×", desc: "Standard local materials, functional finish" },
+    standard: { label: "Standard", zh: "中級", multiplier: "1.25×", desc: "Mid-range materials, improved durability and finish" },
+    premium:  { label: "Premium",  zh: "優質", multiplier: "1.6×",  desc: "High-end imported materials, superior longevity" },
+  };
+  const priorityNote = {
+    look_good_control_cost: "Visible zones defaulted to Standard, hidden works to Basic — adjust freely.",
+    practical_functional:   "All zones defaulted to Basic for maximum cost efficiency.",
+    full_premium:           "All zones defaulted to Premium — no compromise.",
+    quality_first:          "Structural and functional zones set to Premium, finishes to Standard.",
+  }[step1.priority] || "";
 
-          return (
-            <>
-              <div style={styles.section}>
-                <div style={styles.sectionLabel}>06</div>
-                <div style={styles.sectionBody}>
-                  <h2 style={styles.sectionTitle}>Material Grade</h2>
-                  <p style={styles.sectionSub}>
-                    Select the quality tier for each active zone. These multipliers are applied to the base rate per zone when calculating your estimate.
-                  </p>
+  const scope = step2.renovationScope;
+  const rooms = step2.partialRooms || [];
+  const activeStyleItems = Object.entries(STYLE_ITEMS).filter(([, item]) =>
+    item.showFor(scope, rooms)
+  );
 
-                  {priorityNote && (
-                    <div style={styles.gradeNote}>
-                      <span style={{ color: GOLD, fontSize: "10px", flexShrink: 0, marginTop: "2px" }}>✦</span>
-                      <span>{priorityNote}</span>
+  return (
+    <>
+      <div style={styles.section}>
+        <div style={styles.sectionLabel}>06</div>
+        <div style={styles.sectionBody}>
+          <h2 style={styles.sectionTitle}>Material Grade</h2>
+          <p style={styles.sectionSub}>
+            Select the quality tier for each active zone. These multipliers are applied to the base rate per zone when calculating your estimate.
+          </p>
+
+          {priorityNote && (
+            <div style={styles.gradeNote}>
+              <span style={{ color: GOLD, fontSize: "10px", flexShrink: 0, marginTop: "2px" }}>✦</span>
+              <span>{priorityNote}</span>
+            </div>
+          )}
+
+          {/* Grade legend */}
+          <div style={styles.gradeLegend}>
+            {Object.entries(gradeLabels).map(([id, g]) => (
+              <div key={id} style={styles.gradeLegendItem}>
+                <span style={{ ...styles.gradePill, ...(id === "basic" ? styles.gradePill_basic : id === "standard" ? styles.gradePill_standard : styles.gradePill_premium) }}>
+                  {g.label}
+                </span>
+                <span style={styles.gradeLegendMult}>{g.multiplier}</span>
+                <span style={styles.gradeLegendDesc}>{g.desc}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Zone rows */}
+          <div style={styles.zoneList}>
+            {activeZones.map((zone, i) => {
+              const selected = step3[zone.id] || "basic";
+              return (
+                <div
+                  key={zone.id}
+                  style={{
+                    ...styles.zoneRow,
+                    borderTop: i === 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
+                  }}
+                >
+                  <div style={styles.zoneInfo}>
+                    <div style={styles.zoneNameRow}>
+                      <span style={styles.zoneName}>{zone.name}</span>
+                      <span style={styles.zoneZh}>{zone.zh}</span>
+                      {zone.structural && <span style={styles.structuralBadge}>STRUCTURAL</span>}
                     </div>
-                  )}
-
-                  {/* Grade legend */}
-                  <div style={styles.gradeLegend}>
-                    {Object.entries(gradeLabels).map(([id, g]) => (
-                      <div key={id} style={styles.gradeLegendItem}>
-                        <span style={{ ...styles.gradePill, ...(id === "basic" ? styles.gradePill_basic : id === "standard" ? styles.gradePill_standard : styles.gradePill_premium) }}>
-                          {g.label}
-                        </span>
-                        <span style={styles.gradeLegendMult}>{g.multiplier}</span>
-                        <span style={styles.gradeLegendDesc}>{g.desc}</span>
-                      </div>
-                    ))}
+                    <p style={styles.zoneDesc}>{zone.desc}</p>
                   </div>
-
-                  {/* Zone rows */}
-                  <div style={styles.zoneList}>
-                    {activeZones.map((zone, i) => {
-                      const selected = step3[zone.id] || "basic";
+                  <div style={styles.gradeSelector}>
+                    {["basic", "standard", "premium"].map((grade) => {
+                      const isSelected = selected === grade;
                       return (
-                        <div
-                          key={zone.id}
-                          style={{
-                            ...styles.zoneRow,
-                            borderTop: i === 0 ? "1px solid rgba(255,255,255,0.06)" : "none",
-                          }}
-                        >
-                          <div style={styles.zoneInfo}>
-                            <div style={styles.zoneNameRow}>
-                              <span style={styles.zoneName}>{zone.name}</span>
-                              <span style={styles.zoneZh}>{zone.zh}</span>
-                              {zone.structural && <span style={styles.structuralBadge}>STRUCTURAL</span>}
-                            </div>
-                            <p style={styles.zoneDesc}>{zone.desc}</p>
-                          </div>
-
-                          <div style={styles.gradeSelector}>
-                            {["basic", "standard", "premium"].map((grade) => {
-                              const isSelected = selected === grade;
-                              return (
-                                <button
-                                  key={grade}
-                                  type="button"
-                                  style={{
-                                    ...styles.gradeBtn,
-                                    background: isSelected
-                                      ? grade === "premium" ? GOLD
-                                        : grade === "standard" ? "rgba(212,160,23,0.18)"
-                                        : "rgba(255,255,255,0.08)"
-                                      : "transparent",
-                                    color: isSelected
-                                      ? grade === "premium" ? "#000"
-                                        : grade === "standard" ? GOLD
-                                        : "rgba(255,255,255,0.75)"
-                                      : "rgba(255,255,255,0.25)",
-                                    border: isSelected
-                                      ? grade === "premium" ? `1.5px solid ${GOLD}`
-                                        : grade === "standard" ? "1.5px solid rgba(212,160,23,0.5)"
-                                        : "1.5px solid rgba(255,255,255,0.2)"
-                                      : "1.5px solid rgba(255,255,255,0.07)",
-                                    fontWeight: isSelected ? "600" : "400",
-                                  }}
-                                  onClick={() => setStep3({ ...step3, [zone.id]: grade })}
-                                >
-                                  {gradeLabels[grade].label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Apply all shortcut */}
-                  <div style={styles.applyAllRow}>
-                    <span style={styles.applyAllLabel}>APPLY TO ALL ZONES</span>
-                    <div style={{ display: "flex", gap: "8px" }}>
-                      {["basic", "standard", "premium"].map((grade) => (
                         <button
                           key={grade}
                           type="button"
-                          style={styles.applyAllBtn}
-                          onClick={() => {
-                            const updated = {};
-                            activeZones.forEach((z) => { updated[z.id] = grade; });
-                            setStep3(updated);
+                          style={{
+                            ...styles.gradeBtn,
+                            background: isSelected
+                              ? grade === "premium" ? GOLD
+                                : grade === "standard" ? "rgba(212,160,23,0.18)"
+                                : "rgba(255,255,255,0.08)"
+                              : "transparent",
+                            color: isSelected
+                              ? grade === "premium" ? "#000"
+                                : grade === "standard" ? GOLD
+                                : "rgba(255,255,255,0.75)"
+                              : "rgba(255,255,255,0.25)",
+                            border: isSelected
+                              ? grade === "premium" ? `1.5px solid ${GOLD}`
+                                : grade === "standard" ? "1.5px solid rgba(212,160,23,0.5)"
+                                : "1.5px solid rgba(255,255,255,0.2)"
+                              : "1.5px solid rgba(255,255,255,0.07)",
+                            fontWeight: isSelected ? "600" : "400",
                           }}
+                          onClick={() => setStep3({ ...step3, [zone.id]: grade })}
                         >
-                          All {gradeLabels[grade].label}
+                          {gradeLabels[grade].label}
                         </button>
-                      ))}
-                    </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Apply all shortcut */}
+          <div style={styles.applyAllRow}>
+            <span style={styles.applyAllLabel}>APPLY TO ALL ZONES</span>
+            <div style={{ display: "flex", gap: "8px" }}>
+              {["basic", "standard", "premium"].map((grade) => (
+                <button
+                  key={grade}
+                  type="button"
+                  style={styles.applyAllBtn}
+                  onClick={() => {
+                    const updated = {};
+                    activeZones.forEach((z) => { updated[z.id] = grade; });
+                    setStep3(updated);
+                  }}
+                >
+                  All {gradeLabels[grade].label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Style Preferences ── */}
+          {activeStyleItems.length > 0 && (
+            <>
+              <div style={{ height: "1px", background: BORDER, margin: "56px 0 40px" }} />
+              <h2 style={{ ...styles.sectionTitle, marginBottom: "8px" }}>Style Preferences</h2>
+              <p style={{ ...styles.sectionSub, marginBottom: "40px" }}>
+                Help us understand the aesthetic direction you have in mind. These selections are passed to our designer as reference — not binding, but valuable.
+              </p>
+
+              {activeStyleItems.map(([key, item]) => (
+                <div key={key} style={{ marginBottom: "48px" }}>
+                  {/* Item header */}
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "12px", marginBottom: "20px" }}>
+                    <span style={{ fontSize: "15px", color: "#fff", fontFamily: "Georgia, serif" }}>{item.label}</span>
+                    <span style={{ fontSize: "13px", color: "rgba(212,160,23,0.5)", fontFamily: "Georgia, serif" }}>{item.zh}</span>
+                    {step3Style[key] && (
+                      <span style={{ fontSize: "11px", color: GOLD, letterSpacing: "0.1em", marginLeft: "auto" }}>
+                        ✦ {item.options.find(o => o.id === step3Style[key])?.label}
+                      </span>
+                    )}
                   </div>
 
+                  {/* Option cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+                    {item.options.map((opt) => {
+                      const isSelected = step3Style[key] === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setStep3Style({ ...step3Style, [key]: opt.id })}
+                          style={{
+                            background: "transparent",
+                            border: isSelected ? `1.5px solid ${GOLD}` : "1.5px solid rgba(255,255,255,0.08)",
+                            cursor: "pointer",
+                            fontFamily: "inherit",
+                            padding: 0,
+                            overflow: "hidden",
+                            textAlign: "left",
+                            transition: "border 0.15s ease",
+                          }}
+                        >
+                          {/* Colour swatch */}
+                          <div style={{
+                            width: "100%",
+                            height: "80px",
+                            background: opt.color,
+                            borderBottom: isSelected ? `1px solid ${GOLD}` : "1px solid rgba(255,255,255,0.06)",
+                            position: "relative",
+                          }}>
+                            {isSelected && (
+                              <div style={{
+                                position: "absolute",
+                                top: "8px",
+                                right: "8px",
+                                width: "18px",
+                                height: "18px",
+                                background: GOLD,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontSize: "10px",
+                                color: "#000",
+                                fontWeight: "700",
+                              }}>✓</div>
+                            )}
+                          </div>
+                          {/* Label */}
+                          <div style={{
+                            padding: "12px 14px",
+                            background: isSelected ? "rgba(212,160,23,0.06)" : BG_PANEL,
+                          }}>
+                            <p style={{
+                              fontSize: "13px",
+                              color: isSelected ? GOLD : "#fff",
+                              margin: "0 0 4px",
+                              fontFamily: "Georgia, serif",
+                              fontWeight: "400",
+                            }}>{opt.label}</p>
+                            <p style={{
+                              fontSize: "11px",
+                              color: TEXT_MUTED,
+                              margin: 0,
+                              lineHeight: 1.4,
+                            }}>{opt.desc}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-
-              <div style={styles.navRow}>
-                <button style={styles.backBtn} onClick={() => setCurrentStep(2)} type="button">← Back</button>
-                <button
-                  style={{
-                    ...styles.continueBtn,
-                    background: step3Valid ? GOLD : "rgba(212,160,23,0.2)",
-                    color: step3Valid ? "#000" : "rgba(255,255,255,0.2)",
-                    cursor: step3Valid ? "pointer" : "not-allowed",
-                  }}
-                  disabled={!step3Valid}
-                  type="button"
-                  onClick={() => { if (step3Valid) setCurrentStep(4); }}
-                >
-                  Continue → <span style={styles.continueSub}>Extras</span>
-                </button>
-              </div>
+              ))}
             </>
-          );
-        })()}
+          )}
+
+        </div>
+      </div>
+
+      <div style={styles.navRow}>
+        <button style={styles.backBtn} onClick={() => setCurrentStep(2)} type="button">← Back</button>
+        <button
+          style={{
+            ...styles.continueBtn,
+            background: step3Valid ? GOLD : "rgba(212,160,23,0.2)",
+            color: step3Valid ? "#000" : "rgba(255,255,255,0.2)",
+            cursor: step3Valid ? "pointer" : "not-allowed",
+          }}
+          disabled={!step3Valid}
+          type="button"
+          onClick={() => { if (step3Valid) setCurrentStep(4); }}
+        >
+          Continue → <span style={styles.continueSub}>Extras</span>
+        </button>
+      </div>
+    </>
+  );
+})()}
 
   {currentStep === 4 && (
             <>
