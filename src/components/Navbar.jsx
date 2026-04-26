@@ -74,11 +74,21 @@ export default function Navbar() {
         })}
       </div>
       <button
-        onClick={handleAuthBtn}
-        style={isLoggedIn ? styles.navLogoutBtn : styles.navLoginBtn}
-      >
-        {isLoggedIn ? "LOG OUT" : "LOGIN"}
-      </button>
+      onClick={handleAuthBtn}
+      style={isLoggedIn ? styles.navLogoutBtn : styles.navLoginBtn}
+      onMouseEnter={e => {
+        e.currentTarget.style.background = "transparent";
+        e.currentTarget.style.color = GOLD;
+        e.currentTarget.style.border = `1px solid ${GOLD}`;
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.background = GOLD;
+        e.currentTarget.style.color = "#000";
+        e.currentTarget.style.border = "none";
+      }}
+    >
+      {isLoggedIn ? "LOG OUT" : "LOGIN"}
+    </button>
     </nav>
   )
 }
