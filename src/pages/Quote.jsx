@@ -20,15 +20,15 @@ const HK_DISTRICTS = [
 const PRIORITY_PROFILES = [
   {
     id: "look_good_control_cost",
-    zh: "精緻外觀，控制預算",
-    en: "Beautiful on a budget",
-    desc: "Visible surfaces premium, hidden works standard.",
+    zh: "精緻外觀，善用預算",
+    en: "Refined finish, smart allocation",
+    desc: "Premium on every visible surface. Structural works to specification.",
   },
   {
     id: "practical_functional",
-    zh: "實用耐用，價錢合理",
-    en: "Built to last, not to impress",
-    desc: "Durability and function over aesthetics. Budget stays controlled.",
+    zh: "經久耐用，功能優先",
+    en: "Engineered to endure",
+    desc: "Best-in-class materials and systems. Timeless over trendy.",
   },
   {
     id: "full_premium",
@@ -38,18 +38,17 @@ const PRIORITY_PROFILES = [
   },
   {
     id: "quality_first",
-    zh: "質量至上，功能優先",
-    en: "Quality and function first",
-    desc: "Best materials and systems. Design follows structure.",
+    zh: "質量至上，設計跟隨結構",
+    en: "Structure leads, design follows",
+    desc: "Engineering excellence first. Aesthetics built on a flawless foundation.",
   },
 ];
 
 const PROPERTY_TYPES = [
-  { id: "private_flat", label: "Private Flat" },
-  { id: "hos_flat", label: "HOS Flat 居屋" },
-  { id: "village_house", label: "Village House" },
+  { id: "private_flat", label: "Private Flat 私人住宅" },
+  { id: "luxury_flat", label: "Luxury / Serviced Apartment 豪宅／服務式住宅" },
   { id: "detached_house", label: "Detached House 獨立屋" },
-  { id: "commercial", label: "Commercial" },
+  { id: "penthouse", label: "Penthouse 頂層複式" },
 ];
 
 const BUILDING_AGES = [
