@@ -40,24 +40,43 @@ function formatDate(ts) {
 }
 
 function TrackerTab({ adminToken }) {
-  const [projects,       setProjects]       = useState([])
-  const [loading,        setLoading]        = useState(true)
-  const [error,          setError]          = useState("")
-  const [expandedId,     setExpandedId]     = useState(null)
-  const [showModal,      setShowModal]      = useState(false)
-  const [creating,       setCreating]       = useState(false)
-  const [form,           setForm]           = useState({
+  const [projects,          setProjects]          = useState([])
+  const [loading,           setLoading]           = useState(true)
+  const [error,             setError]             = useState("")
+  const [expandedId,        setExpandedId]        = useState(null)
+  const [showModal,         setShowModal]         = useState(false)
+  const [creating,          setCreating]          = useState(false)
+
+  const PHASE_SUGGESTIONS = [
+    "Demolition & Hacking",
+    "Plumbing & Electrical",
+    "Masonry & Tiling",
+    "Carpentry & Finishes",
+    "Painting",
+    "Final Inspection & Handover",
+  ]
+
+  const [form, setForm] = useState({
     customer_email: "", project_name: "", status: "confirmed",
     start_date: "", end_date: "", estimated_cost: "", actual_cost: "",
-    zones: "",
+    phases: [
+      { phase_name: "", status: "upcoming", expected_completion_date: "" },
+      { phase_name: "", status: "upcoming", expected_completion_date: "" },
+      { phase_name: "", status: "upcoming", expected_completion_date: "" },
+      { phase_name: "", status: "upcoming", expected_completion_date: "" },
+    ],
   })
 
-  // Update modal
-  const [showUpdateModal, setShowUpdateModal] = useState(false)
-  const [selectedZone,    setSelectedZone]    = useState(null)
-  const [updateNote,      setUpdateNote]      = useState("")
-  const [updatePhotos,    setUpdatePhotos]    = useState([])
-  const [submittingUpdate, setSubmittingUpdate] = useState(false)
+  const [showUpdateModal,   setShowUpdateModal]   = useState(false)
+  const [selectedPhase,     setSelectedPhase]     = useState(null)
+  const [updateNote,        setUpdateNote]        = useState("")
+  const [updatePhotos,      setUpdatePhotos]      = useState([])
+  const [submittingUpdate,  setSubmittingUpdate]  = useState(false)
+
+  const [showPhaseModal,    setShowPhaseModal]    = useState(false)
+  const [editingPhase,      setEditingPhase]      = useState(null)
+  const [phaseForm,         setPhaseForm]         = useState({ phase_name: "", status: "upcoming", expected_completion_date: "" })
+  const [savingPhase,       setSavingPhase]       = useState(false)
 
   useEffect(() => { fetchProjects() }, [])
 
@@ -65,9 +84,7 @@ function TrackerTab({ adminToken }) {
     setLoading(true)
     setError("")
     try {
-      const res  = await fetch("http://localhost:3001/tracker/admin/projects", {
-        headers: { authorization: adminToken },
-      })
+      const res  = await fetch("http://localhost:3001/tracker/admin/projects", { headers: { authorization: adminToken } })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to fetch projects")
       setProjects(data.projects || [])
@@ -81,25 +98,41 @@ function TrackerTab({ adminToken }) {
   async function handleCreateProject() {
     setCreating(true)
     try {
-      const zones = form.zones.split(",").map(z => z.trim()).filter(Boolean)
-      const res   = await fetch("http://localhost:3001/tracker/admin/projects", {
+      const phases = form.phases
+        .filter(p => p.phase_name.trim())
+        .map((p) => ({
+          phase_name:               p.phase_name.trim(),
+          status:                   p.status,
+          expected_completion_date: p.expected_completion_date || null,
+        }))
+
+      const res  = await fetch("http://localhost:3001/tracker/admin/projects", {
         method:  "POST",
         headers: { authorization: adminToken, "Content-Type": "application/json" },
         body: JSON.stringify({
           customer_email:  form.customer_email,
           project_name:    form.project_name,
           status:          form.status,
-          start_date:      form.start_date      || null,
-          end_date:        form.end_date        || null,
-          estimated_cost:  form.estimated_cost  ? parseFloat(form.estimated_cost)  : null,
-          actual_cost:     form.actual_cost     ? parseFloat(form.actual_cost)     : null,
-          zones,
+          start_date:      form.start_date     || null,
+          end_date:        form.end_date       || null,
+          estimated_cost:  form.estimated_cost ? parseFloat(form.estimated_cost) : null,
+          actual_cost:     form.actual_cost    ? parseFloat(form.actual_cost)    : null,
+          phases,
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to create project")
       setShowModal(false)
-      setForm({ customer_email: "", project_name: "", status: "confirmed", start_date: "", end_date: "", estimated_cost: "", actual_cost: "", zones: "" })
+      setForm({
+        customer_email: "", project_name: "", status: "confirmed",
+        start_date: "", end_date: "", estimated_cost: "", actual_cost: "",
+        phases: [
+          { phase_name: "", status: "upcoming", expected_completion_date: "" },
+          { phase_name: "", status: "upcoming", expected_completion_date: "" },
+          { phase_name: "", status: "upcoming", expected_completion_date: "" },
+          { phase_name: "", status: "upcoming", expected_completion_date: "" },
+        ],
+      })
       fetchProjects()
     } catch (err) {
       alert(err.message)
@@ -108,22 +141,44 @@ function TrackerTab({ adminToken }) {
     }
   }
 
+  async function handleSavePhase() {
+    if (!editingPhase) return
+    setSavingPhase(true)
+    try {
+      const res  = await fetch(`http://localhost:3001/tracker/admin/phases/${editingPhase.id}`, {
+        method:  "PATCH",
+        headers: { authorization: adminToken, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phase_name:               phaseForm.phase_name,
+          status:                   phaseForm.status,
+          expected_completion_date: phaseForm.expected_completion_date || null,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to update phase")
+      setShowPhaseModal(false)
+      setEditingPhase(null)
+      fetchProjects()
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setSavingPhase(false)
+    }
+  }
+
   async function handleAddUpdate() {
-    if (!selectedZone) return
+    if (!selectedPhase) return
     setSubmittingUpdate(true)
     try {
-      // 1. Create update
-      const res  = await fetch(`http://localhost:3001/tracker/admin/zones/${selectedZone.id}/updates`, {
+      const res  = await fetch(`http://localhost:3001/tracker/admin/phases/${selectedPhase.id}/updates`, {
         method:  "POST",
         headers: { authorization: adminToken, "Content-Type": "application/json" },
         body: JSON.stringify({ note: updateNote }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to add update")
-
       const updateId = data.update.id
 
-      // 2. Upload photos
       for (let i = 0; i < updatePhotos.length; i++) {
         const formData = new FormData()
         formData.append("photo", updatePhotos[i])
@@ -138,7 +193,7 @@ function TrackerTab({ adminToken }) {
       setShowUpdateModal(false)
       setUpdateNote("")
       setUpdatePhotos([])
-      setSelectedZone(null)
+      setSelectedPhase(null)
       fetchProjects()
     } catch (err) {
       alert(err.message)
@@ -147,23 +202,12 @@ function TrackerTab({ adminToken }) {
     }
   }
 
-  const STATUS_COLORS = {
-    confirmed:   "#4CAF50",
-    in_progress: GOLD,
-    completed:   "#2196F3",
-    cancelled:   "#f44336",
-  }
-
-  const STATUS_LABELS = {
-    confirmed:   "Confirmed",
-    in_progress: "In Progress",
-    completed:   "Completed",
-    cancelled:   "Cancelled",
-  }
+  const STATUS_COLORS = { confirmed: "#4CAF50", in_progress: GOLD, completed: "#2196F3", cancelled: "#f44336" }
+  const STATUS_LABELS = { confirmed: "Confirmed", in_progress: "In Progress", completed: "Completed", cancelled: "Cancelled" }
+  const PHASE_STATUS_COLORS = { upcoming: "rgba(255,255,255,0.3)", active: GOLD, completed: "#4CAF50" }
 
   return (
     <div>
-      {/* Header */}
       <div style={styles.contentHeader}>
         <div>
           <h2 style={styles.contentTitle}>Project Tracker</h2>
@@ -177,7 +221,6 @@ function TrackerTab({ adminToken }) {
 
       {loading && <div style={styles.stateMsg}>Loading projects...</div>}
       {error   && <div style={styles.errorBox}>{error}</div>}
-
       {!loading && !error && projects.length === 0 && (
         <div style={styles.emptyState}>
           <p style={styles.emptyIcon}>✦</p>
@@ -185,10 +228,8 @@ function TrackerTab({ adminToken }) {
         </div>
       )}
 
-      {/* Project list */}
       {!loading && !error && projects.map((proj) => (
         <div key={proj.id} style={{ marginBottom: "16px", border: `1px solid ${BORDER_SUBTLE}` }}>
-          {/* Project header row */}
           <div
             style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px", cursor: "pointer", background: expandedId === proj.id ? BG_PANEL2 : "transparent" }}
             onClick={() => setExpandedId(expandedId === proj.id ? null : proj.id)}
@@ -205,16 +246,14 @@ function TrackerTab({ adminToken }) {
             </div>
           </div>
 
-          {/* Expanded */}
           {expandedId === proj.id && (
             <div style={{ padding: "0 24px 24px", borderTop: `1px solid ${BORDER_SUBTLE}` }}>
-              {/* Project meta */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", padding: "20px 0", borderBottom: `1px solid ${BORDER_SUBTLE}`, marginBottom: "24px" }}>
                 {[
-                  { label: "START DATE",       value: proj.start_date     || "—" },
-                  { label: "END DATE",         value: proj.end_date       || "—" },
-                  { label: "ESTIMATED COST",   value: proj.estimated_cost ? `HKD $${Number(proj.estimated_cost).toLocaleString()}` : "—" },
-                  { label: "ACTUAL COST",      value: proj.actual_cost    ? `HKD $${Number(proj.actual_cost).toLocaleString()}`    : "—" },
+                  { label: "START DATE",  value: proj.start_date     || "—" },
+                  { label: "END DATE",    value: proj.end_date       || "—" },
+                  { label: "EST. COST",   value: proj.estimated_cost ? `HKD $${Number(proj.estimated_cost).toLocaleString()}` : "—" },
+                  { label: "ACTUAL COST", value: proj.actual_cost    ? `HKD $${Number(proj.actual_cost).toLocaleString()}`    : "—" },
                 ].map((item) => (
                   <div key={item.label}>
                     <p style={styles.expandedLabel}>{item.label}</p>
@@ -223,31 +262,42 @@ function TrackerTab({ adminToken }) {
                 ))}
               </div>
 
-              {/* Zones */}
-              {proj.tracker_zones?.sort((a, b) => a.display_order - b.display_order).map((zone) => (
-                <div key={zone.id} style={{ marginBottom: "24px" }}>
+              <p style={{ ...styles.expandedLabel, marginBottom: "16px" }}>PHASES</p>
+              {(proj.tracker_phases || []).map((phase) => (
+                <div key={phase.id} style={{ marginBottom: "24px", padding: "16px 20px", background: BG_DARK, border: `1px solid ${BORDER_SUBTLE}` }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-                    <p style={{ ...styles.expandedLabel, margin: 0 }}>{zone.zone_name.toUpperCase()}</p>
-                    <button
-                      type="button"
-                      style={{ background: "transparent", border: `1px solid ${BORDER}`, color: GOLD, fontSize: "11px", padding: "4px 12px", cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.08em" }}
-                      onClick={() => { setSelectedZone(zone); setShowUpdateModal(true) }}
-                    >
-                      + Add Update
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: PHASE_STATUS_COLORS[phase.status], flexShrink: 0 }} />
+                      <span style={{ fontSize: "14px", color: "#fff" }}>{phase.phase_name}</span>
+                      <span style={{ fontSize: "10px", letterSpacing: "0.1em", color: PHASE_STATUS_COLORS[phase.status] }}>{phase.status.toUpperCase()}</span>
+                      {phase.expected_completion_date && (
+                        <span style={{ fontSize: "11px", color: TEXT_MUTED }}>· Est. {phase.expected_completion_date}</span>
+                      )}
+                    </div>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <button
+                        type="button"
+                        style={{ background: "transparent", border: `1px solid ${BORDER}`, color: TEXT_DIM, fontSize: "11px", padding: "4px 12px", cursor: "pointer", fontFamily: "inherit" }}
+                        onClick={() => { setEditingPhase(phase); setPhaseForm({ phase_name: phase.phase_name, status: phase.status, expected_completion_date: phase.expected_completion_date || "" }); setShowPhaseModal(true) }}
+                      >Edit Phase</button>
+                      <button
+                        type="button"
+                        style={{ background: "transparent", border: `1px solid ${BORDER}`, color: GOLD, fontSize: "11px", padding: "4px 12px", cursor: "pointer", fontFamily: "inherit", letterSpacing: "0.08em" }}
+                        onClick={() => { setSelectedPhase(phase); setShowUpdateModal(true) }}
+                      >+ Add Update</button>
+                    </div>
                   </div>
 
-                  {zone.tracker_updates?.length === 0 && (
-                    <p style={{ fontSize: "12px", color: TEXT_MUTED }}>No updates yet.</p>
+                  {(phase.tracker_updates || []).length === 0 && (
+                    <p style={{ fontSize: "12px", color: TEXT_MUTED, paddingLeft: "20px" }}>No updates yet.</p>
                   )}
-
-                  {zone.tracker_updates?.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map((update) => (
-                    <div key={update.id} style={{ marginBottom: "16px", paddingLeft: "12px", borderLeft: `2px solid ${BORDER}` }}>
+                  {(phase.tracker_updates || []).map((update) => (
+                    <div key={update.id} style={{ marginBottom: "12px", paddingLeft: "20px", borderLeft: `2px solid ${BORDER}` }}>
                       <p style={{ fontSize: "11px", color: TEXT_MUTED, margin: "0 0 4px" }}>{formatDate(update.created_at)}</p>
                       {update.note && <p style={{ fontSize: "13px", color: TEXT_DIM, margin: "0 0 8px" }}>{update.note}</p>}
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                         {update.tracker_photos?.sort((a, b) => a.display_order - b.display_order).map((photo) => (
-                          <img key={photo.id} src={photo.photo_url} alt="update" style={{ width: "120px", height: "90px", objectFit: "cover", border: `1px solid ${BORDER_SUBTLE}` }} />
+                          <img key={photo.id} src={photo.photo_url} alt="update" style={{ width: "100px", height: "75px", objectFit: "cover", border: `1px solid ${BORDER_SUBTLE}` }} />
                         ))}
                       </div>
                     </div>
@@ -261,17 +311,17 @@ function TrackerTab({ adminToken }) {
 
       {/* Create Project Modal */}
       {showModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: BG_PANEL, border: `1px solid ${BORDER}`, padding: "32px", width: "480px", maxHeight: "90vh", overflowY: "auto" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: BG_PANEL, border: `1px solid ${BORDER}`, padding: "32px", width: "560px", maxHeight: "90vh", overflowY: "auto" }}>
             <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, color: "#fff", margin: "0 0 24px", fontSize: "18px" }}>New Project</h3>
+
             {[
-              { label: "Customer Email *", key: "customer_email", type: "text" },
-              { label: "Project Name *",   key: "project_name",   type: "text" },
-              { label: "Start Date",       key: "start_date",     type: "date" },
-              { label: "End Date",         key: "end_date",       type: "date" },
-              { label: "Estimated Cost (HKD)", key: "estimated_cost", type: "number" },
-              { label: "Actual Cost (HKD)",    key: "actual_cost",    type: "number" },
-              { label: "Zones (comma separated)", key: "zones",    type: "text" },
+              { label: "Customer Email *",     key: "customer_email", type: "text"   },
+              { label: "Project Name *",        key: "project_name",   type: "text"   },
+              { label: "Start Date",            key: "start_date",     type: "date"   },
+              { label: "End Date",              key: "end_date",       type: "date"   },
+              { label: "Estimated Cost (HKD)",  key: "estimated_cost", type: "number" },
+              { label: "Actual Cost (HKD)",     key: "actual_cost",    type: "number" },
             ].map((field) => (
               <div key={field.key} style={{ marginBottom: "16px" }}>
                 <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>{field.label}</p>
@@ -283,6 +333,7 @@ function TrackerTab({ adminToken }) {
                 />
               </div>
             ))}
+
             <div style={{ marginBottom: "24px" }}>
               <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>STATUS *</p>
               <select
@@ -296,6 +347,73 @@ function TrackerTab({ adminToken }) {
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
+
+            <div style={{ borderTop: `1px solid ${BORDER_SUBTLE}`, paddingTop: "20px", marginBottom: "24px" }}>
+              <p style={{ ...styles.expandedLabel, marginBottom: "16px" }}>PHASES (up to 4)</p>
+              {form.phases.map((phase, idx) => (
+                <div key={idx} style={{ marginBottom: "16px", padding: "16px", background: BG_DARK, border: `1px solid ${BORDER_SUBTLE}` }}>
+                  <p style={{ ...styles.expandedLabel, marginBottom: "10px" }}>PHASE {idx + 1}</p>
+                  <p style={{ fontSize: "11px", color: TEXT_MUTED, margin: "0 0 6px" }}>PHASE NAME</p>
+                  <input
+                    type="text"
+                    placeholder="e.g. Demolition & Hacking"
+                    value={phase.phase_name}
+                    onChange={(e) => {
+                      const updated = [...form.phases]
+                      updated[idx] = { ...updated[idx], phase_name: e.target.value }
+                      setForm({ ...form, phases: updated })
+                    }}
+                    style={{ width: "100%", background: BG_PANEL, border: `1px solid ${BORDER}`, color: "#fff", padding: "8px 12px", fontSize: "13px", fontFamily: "inherit", boxSizing: "border-box", marginBottom: "8px" }}
+                  />
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "12px" }}>
+                    {PHASE_SUGGESTIONS.map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          const updated = [...form.phases]
+                          updated[idx] = { ...updated[idx], phase_name: s }
+                          setForm({ ...form, phases: updated })
+                        }}
+                        style={{ background: "transparent", border: `1px solid rgba(255,255,255,0.1)`, color: TEXT_MUTED, fontSize: "11px", padding: "3px 10px", cursor: "pointer", fontFamily: "inherit" }}
+                      >{s}</button>
+                    ))}
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                    <div>
+                      <p style={{ fontSize: "11px", color: TEXT_MUTED, margin: "0 0 6px" }}>STATUS</p>
+                      <select
+                        value={phase.status}
+                        onChange={(e) => {
+                          const updated = [...form.phases]
+                          updated[idx] = { ...updated[idx], status: e.target.value }
+                          setForm({ ...form, phases: updated })
+                        }}
+                        style={{ width: "100%", background: BG_PANEL, border: `1px solid ${BORDER}`, color: "#fff", padding: "8px 12px", fontSize: "13px", fontFamily: "inherit" }}
+                      >
+                        <option value="upcoming">Upcoming</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </div>
+                    <div>
+                      <p style={{ fontSize: "11px", color: TEXT_MUTED, margin: "0 0 6px" }}>EST. COMPLETION</p>
+                      <input
+                        type="date"
+                        value={phase.expected_completion_date}
+                        onChange={(e) => {
+                          const updated = [...form.phases]
+                          updated[idx] = { ...updated[idx], expected_completion_date: e.target.value }
+                          setForm({ ...form, phases: updated })
+                        }}
+                        style={{ width: "100%", background: BG_PANEL, border: `1px solid ${BORDER}`, color: "#fff", padding: "8px 12px", fontSize: "13px", fontFamily: "inherit", boxSizing: "border-box" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
               <button type="button" onClick={() => setShowModal(false)} style={{ ...styles.refreshBtn, cursor: "pointer" }}>Cancel</button>
               <button type="button" onClick={handleCreateProject} disabled={creating} style={{ ...styles.refreshBtn, borderColor: GOLD, color: GOLD, cursor: "pointer" }}>
@@ -306,12 +424,64 @@ function TrackerTab({ adminToken }) {
         </div>
       )}
 
+      {/* Edit Phase Modal */}
+      {showPhaseModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: BG_PANEL, border: `1px solid ${BORDER}`, padding: "32px", width: "440px" }}>
+            <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, color: "#fff", margin: "0 0 24px", fontSize: "18px" }}>Edit Phase</h3>
+            <div style={{ marginBottom: "16px" }}>
+              <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>PHASE NAME</p>
+              <input
+                type="text"
+                value={phaseForm.phase_name}
+                onChange={(e) => setPhaseForm({ ...phaseForm, phase_name: e.target.value })}
+                style={{ width: "100%", background: BG_DARK, border: `1px solid ${BORDER}`, color: "#fff", padding: "10px 12px", fontSize: "13px", fontFamily: "inherit", boxSizing: "border-box" }}
+              />
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "8px" }}>
+                {PHASE_SUGGESTIONS.map((s) => (
+                  <button key={s} type="button" onClick={() => setPhaseForm({ ...phaseForm, phase_name: s })}
+                    style={{ background: "transparent", border: `1px solid rgba(255,255,255,0.1)`, color: TEXT_MUTED, fontSize: "11px", padding: "3px 10px", cursor: "pointer", fontFamily: "inherit" }}
+                  >{s}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ marginBottom: "16px" }}>
+              <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>STATUS</p>
+              <select
+                value={phaseForm.status}
+                onChange={(e) => setPhaseForm({ ...phaseForm, status: e.target.value })}
+                style={{ width: "100%", background: BG_DARK, border: `1px solid ${BORDER}`, color: "#fff", padding: "10px 12px", fontSize: "13px", fontFamily: "inherit" }}
+              >
+                <option value="upcoming">Upcoming</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div style={{ marginBottom: "24px" }}>
+              <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>EST. COMPLETION DATE</p>
+              <input
+                type="date"
+                value={phaseForm.expected_completion_date}
+                onChange={(e) => setPhaseForm({ ...phaseForm, expected_completion_date: e.target.value })}
+                style={{ width: "100%", background: BG_DARK, border: `1px solid ${BORDER}`, color: "#fff", padding: "10px 12px", fontSize: "13px", fontFamily: "inherit", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button type="button" onClick={() => { setShowPhaseModal(false); setEditingPhase(null) }} style={{ ...styles.refreshBtn, cursor: "pointer" }}>Cancel</button>
+              <button type="button" onClick={handleSavePhase} disabled={savingPhase} style={{ ...styles.refreshBtn, borderColor: GOLD, color: GOLD, cursor: "pointer" }}>
+                {savingPhase ? "Saving..." : "Save Phase"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add Update Modal */}
       {showUpdateModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ background: BG_PANEL, border: `1px solid ${BORDER}`, padding: "32px", width: "480px" }}>
             <h3 style={{ fontFamily: "Georgia, serif", fontWeight: 400, color: "#fff", margin: "0 0 8px", fontSize: "18px" }}>Add Update</h3>
-            <p style={{ fontSize: "12px", color: TEXT_MUTED, margin: "0 0 24px" }}>{selectedZone?.zone_name}</p>
+            <p style={{ fontSize: "12px", color: TEXT_MUTED, margin: "0 0 24px" }}>{selectedPhase?.phase_name}</p>
             <div style={{ marginBottom: "16px" }}>
               <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>NOTE</p>
               <textarea
@@ -323,19 +493,11 @@ function TrackerTab({ adminToken }) {
             </div>
             <div style={{ marginBottom: "24px" }}>
               <p style={{ ...styles.expandedLabel, marginBottom: "6px" }}>PHOTOS</p>
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => setUpdatePhotos(Array.from(e.target.files))}
-                style={{ fontSize: "12px", color: TEXT_DIM }}
-              />
-              {updatePhotos.length > 0 && (
-                <p style={{ fontSize: "11px", color: TEXT_MUTED, marginTop: "6px" }}>{updatePhotos.length} photo(s) selected</p>
-              )}
+              <input type="file" multiple accept="image/*" onChange={(e) => setUpdatePhotos(Array.from(e.target.files))} style={{ fontSize: "12px", color: TEXT_DIM }} />
+              {updatePhotos.length > 0 && <p style={{ fontSize: "11px", color: TEXT_MUTED, marginTop: "6px" }}>{updatePhotos.length} photo(s) selected</p>}
             </div>
             <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-              <button type="button" onClick={() => { setShowUpdateModal(false); setUpdateNote(""); setUpdatePhotos([]); setSelectedZone(null) }} style={{ ...styles.refreshBtn, cursor: "pointer" }}>Cancel</button>
+              <button type="button" onClick={() => { setShowUpdateModal(false); setUpdateNote(""); setUpdatePhotos([]); setSelectedPhase(null) }} style={{ ...styles.refreshBtn, cursor: "pointer" }}>Cancel</button>
               <button type="button" onClick={handleAddUpdate} disabled={submittingUpdate} style={{ ...styles.refreshBtn, borderColor: GOLD, color: GOLD, cursor: "pointer" }}>
                 {submittingUpdate ? "Saving..." : "Save Update"}
               </button>
@@ -356,13 +518,11 @@ export default function AdminDashboard() {
   const [expandedId,  setExpandedId]  = useState(null)
   const admin = JSON.parse(localStorage.getItem("admin") || "{}")
 
-  // Auth guard
   useEffect(() => {
     const token = localStorage.getItem("adminToken")
     if (!token) navigate("/admin/login")
   }, [navigate])
 
-  // Fetch inquiries
   useEffect(() => {
     if (activeTab !== "estimation") return
     fetchInquiries()
@@ -378,7 +538,7 @@ export default function AdminDashboard() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to fetch inquiries")
-        console.log(data.inquiries)
+      console.log(data.inquiries)
       setInquiries(data.inquiries || [])
     } catch (err) {
       setError(err.message)
@@ -405,7 +565,6 @@ export default function AdminDashboard() {
   return (
     <div style={styles.root}>
 
-      {/* ── Header ── */}
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           <span style={styles.headerLogo}>PYDesignHK</span>
@@ -414,13 +573,10 @@ export default function AdminDashboard() {
         </div>
         <div style={styles.headerRight}>
           <span style={styles.headerAdmin}>{admin.full_name || "Admin"}</span>
-          <button style={styles.logoutBtn} onClick={handleLogout} type="button">
-            Log Out
-          </button>
+          <button style={styles.logoutBtn} onClick={handleLogout} type="button">Log Out</button>
         </div>
       </header>
 
-      {/* ── Tabs ── */}
       <div style={styles.tabBar}>
         {[
           { id: "estimation", label: "Cost Estimation" },
@@ -441,10 +597,8 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      {/* ── Content ── */}
       <div style={styles.content}>
 
-        {/* ── Cost Estimation Tab ── */}
         {activeTab === "estimation" && (
           <>
             <div style={styles.contentHeader}>
@@ -452,18 +606,11 @@ export default function AdminDashboard() {
                 <h2 style={styles.contentTitle}>Submitted Inquiries</h2>
                 <p style={styles.contentSub}>All cost estimation inquiries submitted through the website.</p>
               </div>
-              <button style={styles.refreshBtn} onClick={fetchInquiries} type="button">
-                ↻ Refresh
-              </button>
+              <button style={styles.refreshBtn} onClick={fetchInquiries} type="button">↻ Refresh</button>
             </div>
 
-            {loading && (
-              <div style={styles.stateMsg}>Loading inquiries...</div>
-            )}
-
-            {error && (
-              <div style={styles.errorBox}>{error}</div>
-            )}
+            {loading && <div style={styles.stateMsg}>Loading inquiries...</div>}
+            {error   && <div style={styles.errorBox}>{error}</div>}
 
             {!loading && !error && inquiries.length === 0 && (
               <div style={styles.emptyState}>
@@ -474,7 +621,6 @@ export default function AdminDashboard() {
 
             {!loading && !error && inquiries.length > 0 && (
               <div style={styles.tableWrap}>
-                {/* Table header */}
                 <div style={styles.tableHeader}>
                   <span style={{ ...styles.th, flex: 2 }}>CUSTOMER</span>
                   <span style={{ ...styles.th, flex: 2 }}>CONTACT</span>
@@ -486,14 +632,10 @@ export default function AdminDashboard() {
                   <span style={{ ...styles.th, flex: 0.5 }}></span>
                 </div>
 
-                {/* Rows */}
                 {inquiries.map((inq) => (
                   <div key={inq.inquiry_id}>
                     <div
-                      style={{
-                        ...styles.tableRow,
-                        background: expandedId === inq.inquiry_id ? BG_PANEL2 : "transparent",
-                      }}
+                      style={{ ...styles.tableRow, background: expandedId === inq.inquiry_id ? BG_PANEL2 : "transparent" }}
                       onClick={() => toggleExpand(inq.inquiry_id)}
                     >
                       <div style={{ ...styles.td, flex: 2 }}>
@@ -514,7 +656,6 @@ export default function AdminDashboard() {
                       </span>
                     </div>
 
-                    {/* Expanded detail */}
                     {expandedId === inq.inquiry_id && (
                       <div style={styles.expandedRow}>
                         <div style={styles.expandedGrid}>
@@ -593,7 +734,6 @@ export default function AdminDashboard() {
 
                         </div>
 
-                        {/* WhatsApp quick action */}
                         {inq.preferred_contact_method === "whatsapp" && inq.contact_phone && (
                           <div style={styles.expandedActions}>
                             <a
@@ -618,10 +758,9 @@ export default function AdminDashboard() {
           </>
         )}
 
-        {/* ── Project Tracker Tab ── */}
         {activeTab === "tracker" && (
-  <TrackerTab adminToken={localStorage.getItem("adminToken")} />
-)}
+          <TrackerTab adminToken={localStorage.getItem("adminToken")} />
+        )}
 
       </div>
     </div>
@@ -635,8 +774,6 @@ const styles = {
     fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
     minHeight: "100vh",
   },
-
-  // Header
   header: {
     display: "flex",
     alignItems: "center",
@@ -649,36 +786,12 @@ const styles = {
     top: 0,
     zIndex: 100,
   },
-  headerLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "16px",
-  },
-  headerLogo: {
-    fontFamily: "Georgia, serif",
-    fontStyle: "italic",
-    fontSize: "18px",
-    color: GOLD,
-  },
-  headerDivider: {
-    color: "rgba(255,255,255,0.15)",
-    fontSize: "16px",
-  },
-  headerPortal: {
-    fontSize: "12px",
-    letterSpacing: "0.14em",
-    color: TEXT_MUTED,
-  },
-  headerRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: "20px",
-  },
-  headerAdmin: {
-    fontSize: "13px",
-    color: TEXT_DIM,
-    letterSpacing: "0.04em",
-  },
+  headerLeft: { display: "flex", alignItems: "center", gap: "16px" },
+  headerLogo: { fontFamily: "Georgia, serif", fontStyle: "italic", fontSize: "18px", color: GOLD },
+  headerDivider: { color: "rgba(255,255,255,0.15)", fontSize: "16px" },
+  headerPortal: { fontSize: "12px", letterSpacing: "0.14em", color: TEXT_MUTED },
+  headerRight: { display: "flex", alignItems: "center", gap: "20px" },
+  headerAdmin: { fontSize: "13px", color: TEXT_DIM, letterSpacing: "0.04em" },
   logoutBtn: {
     background: "transparent",
     border: `1px solid rgba(255,255,255,0.1)`,
@@ -689,8 +802,6 @@ const styles = {
     cursor: "pointer",
     fontFamily: "inherit",
   },
-
-  // Tabs
   tabBar: {
     display: "flex",
     gap: "0",
@@ -708,8 +819,6 @@ const styles = {
     fontFamily: "inherit",
     transition: "all 0.15s ease",
   },
-
-  // Content area
   content: {
     padding: "40px 48px",
     maxWidth: "1400px",
@@ -721,18 +830,8 @@ const styles = {
     alignItems: "flex-start",
     marginBottom: "32px",
   },
-  contentTitle: {
-    fontSize: "24px",
-    fontFamily: "Georgia, serif",
-    fontWeight: "400",
-    color: "#fff",
-    margin: "0 0 6px",
-  },
-  contentSub: {
-    fontSize: "13px",
-    color: TEXT_MUTED,
-    margin: 0,
-  },
+  contentTitle: { fontSize: "24px", fontFamily: "Georgia, serif", fontWeight: "400", color: "#fff", margin: "0 0 6px" },
+  contentSub: { fontSize: "13px", color: TEXT_MUTED, margin: 0 },
   refreshBtn: {
     background: "transparent",
     border: `1px solid rgba(255,255,255,0.1)`,
@@ -743,14 +842,7 @@ const styles = {
     cursor: "pointer",
     fontFamily: "inherit",
   },
-
-  // States
-  stateMsg: {
-    fontSize: "13px",
-    color: TEXT_MUTED,
-    padding: "48px 0",
-    textAlign: "center",
-  },
+  stateMsg: { fontSize: "13px", color: TEXT_MUTED, padding: "48px 0", textAlign: "center" },
   errorBox: {
     padding: "12px 16px",
     background: "rgba(255,80,80,0.08)",
@@ -759,25 +851,10 @@ const styles = {
     fontSize: "13px",
     marginBottom: "24px",
   },
-  emptyState: {
-    textAlign: "center",
-    padding: "80px 0",
-  },
-  emptyIcon: {
-    fontSize: "24px",
-    color: "rgba(212,160,23,0.3)",
-    margin: "0 0 16px",
-  },
-  emptyText: {
-    fontSize: "15px",
-    color: TEXT_MUTED,
-    margin: 0,
-  },
-
-  // Table
-  tableWrap: {
-    border: `1px solid ${BORDER_SUBTLE}`,
-  },
+  emptyState: { textAlign: "center", padding: "80px 0" },
+  emptyIcon: { fontSize: "24px", color: "rgba(212,160,23,0.3)", margin: "0 0 16px" },
+  emptyText: { fontSize: "15px", color: TEXT_MUTED, margin: 0 },
+  tableWrap: { border: `1px solid ${BORDER_SUBTLE}` },
   tableHeader: {
     display: "flex",
     alignItems: "center",
@@ -786,13 +863,7 @@ const styles = {
     borderBottom: `1px solid ${BORDER_SUBTLE}`,
     gap: "16px",
   },
-  th: {
-    flex: 1,
-    fontSize: "10px",
-    letterSpacing: "0.16em",
-    color: GOLD,
-    fontWeight: "600",
-  },
+  th: { flex: 1, fontSize: "10px", letterSpacing: "0.16em", color: GOLD, fontWeight: "600" },
   tableRow: {
     display: "flex",
     alignItems: "center",
@@ -802,23 +873,9 @@ const styles = {
     cursor: "pointer",
     transition: "background 0.12s ease",
   },
-  td: {
-    flex: 1,
-    fontSize: "13px",
-    color: TEXT_DIM,
-  },
-  tdPrimary: {
-    fontSize: "13px",
-    color: "#fff",
-    margin: "0 0 3px",
-  },
-  tdSecondary: {
-    fontSize: "11px",
-    color: TEXT_MUTED,
-    margin: 0,
-  },
-
-  // Expanded row
+  td: { flex: 1, fontSize: "13px", color: TEXT_DIM },
+  tdPrimary: { fontSize: "13px", color: "#fff", margin: "0 0 3px" },
+  tdSecondary: { fontSize: "11px", color: TEXT_MUTED, margin: 0 },
   expandedRow: {
     padding: "24px 20px 20px",
     background: BG_PANEL2,
@@ -831,29 +888,10 @@ const styles = {
     gap: "24px",
     marginBottom: "20px",
   },
-  expandedSection: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
-  },
-  expandedLabel: {
-    fontSize: "10px",
-    letterSpacing: "0.16em",
-    color: GOLD,
-    margin: "0 0 6px",
-    fontWeight: "600",
-  },
-  expandedValue: {
-    fontSize: "12px",
-    color: TEXT_DIM,
-    margin: 0,
-    lineHeight: 1.6,
-    textTransform: "capitalize",
-  },
-  expandedActions: {
-    paddingTop: "16px",
-    borderTop: `1px solid ${BORDER_SUBTLE}`,
-  },
+  expandedSection: { display: "flex", flexDirection: "column", gap: "4px" },
+  expandedLabel: { fontSize: "10px", letterSpacing: "0.16em", color: GOLD, margin: "0 0 6px", fontWeight: "600" },
+  expandedValue: { fontSize: "12px", color: TEXT_DIM, margin: 0, lineHeight: 1.6, textTransform: "capitalize" },
+  expandedActions: { paddingTop: "16px", borderTop: `1px solid ${BORDER_SUBTLE}` },
   whatsappBtn: {
     display: "inline-flex",
     alignItems: "center",

@@ -1,24 +1,24 @@
 const express = require('express')
-const multer  = require('multer')
 const router  = express.Router()
 const {
   createProject,
-  addZone,
+  getAdminProjects,
+  updateProject,
+  updatePhase,
   addUpdate,
   uploadPhoto,
-  listProjects,
-  updateProject,
   getCustomerProjects,
 } = require('../controllers/trackerController')
 
-const upload = multer({ storage: multer.memoryStorage() })
+// Admin
+router.post('/admin/projects',                    createProject)
+router.get('/admin/projects',                     getAdminProjects)
+router.patch('/admin/projects/:id',               updateProject)
+router.patch('/admin/phases/:id',                 updatePhase)
+router.post('/admin/phases/:phase_id/updates',    addUpdate)
+router.post('/admin/updates/:update_id/photos',   ...uploadPhoto)
 
-router.post('/admin/projects',                createProject)
-router.post('/admin/projects/:id/zones',      addZone)
-router.post('/admin/zones/:id/updates',       addUpdate)
-router.post('/admin/updates/:id/photos',      upload.single('photo'), uploadPhoto)
-router.get('/admin/projects',                 listProjects)
-router.patch('/admin/projects/:id',           updateProject)
-router.get('/customer/projects',              getCustomerProjects)
+// Customer
+router.get('/customer/projects', getCustomerProjects)
 
 module.exports = router
