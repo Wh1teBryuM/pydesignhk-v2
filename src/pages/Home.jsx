@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
@@ -7,6 +8,26 @@ const NAV_LINKS = ["Home", "Services", "Cost Estimator", "Track Project"];
 export default function HomePage() {
   const navigate = useNavigate();
 
+  useEffect(() => {
+  const style = document.createElement("style");
+  style.textContent = `
+    @keyframes heroTag {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pyFadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-tag  { animation: heroTag  0.7s 0.2s  ease both; }
+    .hero-h1   { animation: pyFadeUp 0.9s 0.4s  cubic-bezier(0.22,1,0.36,1) both; }
+    .hero-sub  { animation: pyFadeUp 0.8s 0.7s  cubic-bezier(0.22,1,0.36,1) both; }
+    .hero-btns { animation: pyFadeUp 0.7s 0.95s cubic-bezier(0.22,1,0.36,1) both; }
+  `;
+  document.head.appendChild(style);
+  return () => document.head.removeChild(style);
+}, []);
+  
   return (
     <div style={styles.root}>
       <Navbar />
@@ -15,17 +36,17 @@ export default function HomePage() {
       <section style={styles.hero}>
         <div style={styles.heroOverlay} />
         <div style={styles.heroContent}>
-          <p style={styles.heroTag}>EST. 1994 · PREMIUM INTERIORS</p>
-          <h1 style={styles.heroHeading}>
+          <p className="hero-tag" style={styles.heroTag}>EST. 1994 · PREMIUM INTERIORS</p>
+          <h1 className="hero-h1" style={styles.heroHeading}>
             Architecture<br />
             is the <em style={styles.heroItalic}>soul</em><br />
             of living.
           </h1>
-          <p style={styles.heroSub}>
+          <p className="hero-sub" style={styles.heroSub}>
             Crafting bespoke interior environments that marry structural
             permanence with the warmth of high-end design.
           </p>
-          <div style={styles.heroBtns}>
+          <div className="hero-btns" style={styles.heroBtns}>
             <button style={styles.heroBtnPrimary}>START CONSULTATION</button>
             <button style={styles.heroBtnOutline}>VIEW PORTFOLIO</button>
           </div>
