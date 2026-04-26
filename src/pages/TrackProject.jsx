@@ -105,24 +105,6 @@ export default function TrackProject() {
               </span>
             </div>
 
-            {/* Budget */}
-            {(proj.estimated_cost || proj.actual_cost) && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "32px" }}>
-                {proj.estimated_cost && (
-                  <div style={{ background: BG_PANEL, border: `1px solid ${BORDER_SUBTLE}`, padding: "20px 24px" }}>
-                    <p style={{ fontSize: "10px", letterSpacing: "0.16em", color: GOLD, margin: "0 0 8px", fontWeight: 600 }}>ESTIMATED COST</p>
-                    <p style={{ fontSize: "20px", color: "#fff", margin: 0 }}>HKD ${Number(proj.estimated_cost).toLocaleString()}</p>
-                  </div>
-                )}
-                {proj.actual_cost && (
-                  <div style={{ background: BG_PANEL, border: `1px solid ${BORDER_SUBTLE}`, padding: "20px 24px" }}>
-                    <p style={{ fontSize: "10px", letterSpacing: "0.16em", color: GOLD, margin: "0 0 8px", fontWeight: 600 }}>ACTUAL COST</p>
-                    <p style={{ fontSize: "20px", color: "#fff", margin: 0 }}>HKD ${Number(proj.actual_cost).toLocaleString()}</p>
-                  </div>
-                )}
-              </div>
-            )}
-
             {/* Zones */}
             {proj.tracker_zones?.sort((a, b) => a.display_order - b.display_order).map((zone) => (
               <div key={zone.id} style={{ marginBottom: "32px" }}>
