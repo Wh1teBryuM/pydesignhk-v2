@@ -1073,9 +1073,12 @@ async function handleSubmit() {
           {activeStyleItems.length > 0 && (
             <>
               <div style={{ height: "1px", background: BORDER, margin: "56px 0 40px" }} />
-              <h2 style={{ ...styles.sectionTitle, marginBottom: "8px" }}>Style Preferences</h2>
+              <h2 style={{ ...styles.sectionTitle, marginBottom: "8px" }}>
+                Style Preferences
+                <span style={{ fontSize: "12px", letterSpacing: "0.12em", color: TEXT_MUTED, fontFamily: "inherit", fontStyle: "normal", marginLeft: "14px", fontWeight: "400" }}>OPTIONAL</span>
+              </h2>
               <p style={{ ...styles.sectionSub, marginBottom: "40px" }}>
-                Help us understand the aesthetic direction you have in mind. These selections are passed to our designer as reference — not binding, but valuable.
+                Help us understand the aesthetic direction you have in mind. These selections are passed to our designer as reference — not binding, but valuable. Tap any selected option again to deselect.
               </p>
 
               {activeStyleItems.map(([key, item]) => (
@@ -1105,7 +1108,10 @@ async function handleSubmit() {
                         <button
                           key={opt.id}
                           type="button"
-                          onClick={() => setStep3Style({ ...step3Style, [key]: opt.id })}
+                          onClick={() => setStep3Style({
+                            ...step3Style,
+                            [key]: step3Style[key] === opt.id ? undefined : opt.id,
+                          })}
                           style={{
                             background: BG_PANEL,
                             border: isSelected ? `1.5px solid ${GOLD}` : "1.5px solid rgba(255,255,255,0.08)",
