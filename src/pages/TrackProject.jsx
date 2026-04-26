@@ -36,7 +36,7 @@ export default function TrackProject() {
     setLoading(true)
     setError("")
     try {
-      const res  = await fetch("http://localhost:3001/tracker/customer/projects", { headers: { authorization: token } })
+      const res  = await fetch("http://https://pydesignhk-backend.onrender.com/tracker/customer/projects", { headers: { authorization: token } })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to load projects")
       setProjects(data.projects || [])

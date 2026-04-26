@@ -84,7 +84,7 @@ function TrackerTab({ adminToken }) {
     setLoading(true)
     setError("")
     try {
-      const res  = await fetch("http://localhost:3001/tracker/admin/projects", { headers: { authorization: adminToken } })
+      const res  = await fetch("http://https://pydesignhk-backend.onrender.com/tracker/admin/projects", { headers: { authorization: adminToken } })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Failed to fetch projects")
       setProjects(data.projects || [])
@@ -106,7 +106,7 @@ function TrackerTab({ adminToken }) {
           expected_completion_date: p.expected_completion_date || null,
         }))
 
-      const res  = await fetch("http://localhost:3001/tracker/admin/projects", {
+      const res  = await fetch("http://https://pydesignhk-backend.onrender.com/tracker/admin/projects", {
         method:  "POST",
         headers: { authorization: adminToken, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -145,7 +145,7 @@ function TrackerTab({ adminToken }) {
     if (!editingPhase) return
     setSavingPhase(true)
     try {
-      const res  = await fetch(`http://localhost:3001/tracker/admin/phases/${editingPhase.id}`, {
+      const res  = await fetch(`http://https://pydesignhk-backend.onrender.com/tracker/admin/phases/${editingPhase.id}`, {
         method:  "PATCH",
         headers: { authorization: adminToken, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -170,7 +170,7 @@ function TrackerTab({ adminToken }) {
     if (!selectedPhase) return
     setSubmittingUpdate(true)
     try {
-      const res  = await fetch(`http://localhost:3001/tracker/admin/phases/${selectedPhase.id}/updates`, {
+      const res  = await fetch(`http://https://pydesignhk-backend.onrender.com/tracker/admin/phases/${selectedPhase.id}/updates`, {
         method:  "POST",
         headers: { authorization: adminToken, "Content-Type": "application/json" },
         body: JSON.stringify({ note: updateNote }),
@@ -183,7 +183,7 @@ function TrackerTab({ adminToken }) {
         const formData = new FormData()
         formData.append("photo", updatePhotos[i])
         formData.append("display_order", i)
-        await fetch(`http://localhost:3001/tracker/admin/updates/${updateId}/photos`, {
+        await fetch(`http://https://pydesignhk-backend.onrender.com/tracker/admin/updates/${updateId}/photos`, {
           method:  "POST",
           headers: { authorization: adminToken },
           body:    formData,
@@ -267,7 +267,7 @@ function TrackerTab({ adminToken }) {
                     value={proj.status}
                     onChange={async (e) => {
                       const token = localStorage.getItem("adminToken")
-                      await fetch(`http://localhost:3001/tracker/admin/projects/${proj.id}`, {
+                      await fetch(`http://https://pydesignhk-backend.onrender.com/tracker/admin/projects/${proj.id}`, {
                         method: "PATCH",
                         headers: { authorization: token, "Content-Type": "application/json" },
                         body: JSON.stringify({ status: e.target.value }),
@@ -555,7 +555,7 @@ export default function AdminDashboard() {
     setError("")
     try {
       const token = localStorage.getItem("adminToken")
-      const res   = await fetch("http://localhost:3001/admin/inquiries", {
+      const res   = await fetch("http://https://pydesignhk-backend.onrender.com/admin/inquiries", {
         headers: { authorization: token },
       })
       const data = await res.json()
@@ -571,7 +571,7 @@ export default function AdminDashboard() {
 
   async function handleLogout() {
     const token = localStorage.getItem("adminToken")
-    await fetch("http://localhost:3001/admin/logout", {
+    await fetch("http://https://pydesignhk-backend.onrender.com/admin/logout", {
       method:  "POST",
       headers: { authorization: token },
     })
