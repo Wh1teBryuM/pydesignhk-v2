@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentImage, setCurrentImage] = useState(0);
-  const images = ["bedroom.png", "loginimage2.jpg", "loginimage3.jpg", "loginimage4.webp"];
+  const images = ["/bedroom.png", "/loginimage2.jpg", "/loginimage3.jpg", "/loginimage4.webp"];
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -188,7 +188,7 @@ const styles = {
     display: "flex",
     alignItems: "flex-end",
     padding: "48px",
-    backgroundImage: "url('bedroom.png')",
+    backgroundImage: "url('/bedroom.png')",
     backgroundSize: "cover",
     backgroundPosition: "center",
     animation: "slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both",
