@@ -24,10 +24,10 @@ const CONTACT_LABELS = {
 }
 
 const PRIORITY_LABELS = {
-  look_good_control_cost: "Beautiful on a budget",
-  practical_functional:   "Built to last",
-  full_premium:           "Full premium",
-  quality_first:          "Quality first",
+  look_good_control_cost: "Refined finish, smart allocation",
+  practical_functional:   "Engineered to endure",
+  full_premium:           "Full premium, no compromise",
+  quality_first:          "Structure leads, design follows",
 }
 
 function formatDate(ts) {
@@ -554,11 +554,30 @@ export default function AdminDashboard() {
                             {inq.material_grades
                               ? Object.entries(inq.material_grades).map(([zone, grade]) => (
                                   <p key={zone} style={styles.expandedValue}>
-                                    {zone.replace(/_/g, " ")}: <span style={{ color: grade === "premium" ? GOLD : "#fff" }}>{grade}</span>
+                                    {zone.replace(/_/g, " ")}: <span style={{ color: grade === "premium" ? GOLD : grade === "standard" ? "rgba(212,160,23,0.7)" : TEXT_DIM }}>{grade}</span>
                                   </p>
                                 ))
                               : <p style={styles.expandedValue}>—</p>
                             }
+                          </div>
+
+                          <div style={styles.expandedSection}>
+                            <p style={styles.expandedLabel}>STYLE PREFERENCES</p>
+                            {inq.style_preferences && Object.keys(inq.style_preferences).length > 0
+                              ? Object.entries(inq.style_preferences).map(([key, value]) => (
+                                  value ? (
+                                    <p key={key} style={styles.expandedValue}>
+                                      {key.replace(/_/g, " ")}: <span style={{ color: GOLD }}>{String(value).replace(/_/g, " ")}</span>
+                                    </p>
+                                  ) : null
+                                ))
+                              : <p style={styles.expandedValue}>—</p>
+                            }
+                          </div>
+
+                          <div style={styles.expandedSection}>
+                            <p style={styles.expandedLabel}>ADDITIONAL ZONES</p>
+                            <p style={styles.expandedValue}>{inq.additional_zones || "—"}</p>
                           </div>
 
                           <div style={styles.expandedSection}>

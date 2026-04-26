@@ -108,12 +108,13 @@ const getInquiries = async (req, res) => {
         additional_notes,
         submitted_at,
         projects (
-          priority_profile, property_type, district, building_age,
-          saleable_area_sqft, bedroom_count, bathroom_count,
-          kitchen_count, living_room_count, estate_name, block,
-          floor, flat, street, lift_access, has_stairs, has_parking,
-          site_remarks, renovation_scope, additional_requirements
-        ),
+        priority_profile, property_type, district, building_age,
+        saleable_area_sqft, bedroom_count, bathroom_count,
+        kitchen_count, living_room_count, estate_name, block,
+        floor, flat, street, lift_access, has_stairs, has_parking,
+        site_remarks, renovation_scope, additional_requirements,
+        material_grades, style_preferences, additional_zones
+      ),
         customers (
           full_name, email
         )
