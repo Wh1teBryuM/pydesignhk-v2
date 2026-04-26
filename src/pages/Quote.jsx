@@ -80,16 +80,55 @@ const SITE_MULTIPLIERS = {
 
 const STYLE_ITEMS = {
   flooring: {
-    label: "Flooring",
-    zh: "地板",
-    showFor: () => true, // always
-    options: [
-      { id: "light_wood", label: "Light Oak", desc: "Warm Scandinavian tone, wide plank", color: "#C8A97E" },
-      { id: "dark_wood", label: "Dark Walnut", desc: "Deep rich grain, dramatic contrast", color: "#4A3728" },
-      { id: "marble_white", label: "White Marble", desc: "Carrara-style, polished finish", color: "#F0EDE8" },
-      { id: "concrete_grey", label: "Concrete Grey", desc: "Industrial matte screed", color: "#9B9B9B" },
-    ],
-  },
+  label: "Flooring Style",
+  zh: "地板風格",
+  showFor: () => true,
+  options: [
+    {
+      id: "light_wood",
+      label: "Light Oak",
+      desc: "Warm Scandinavian tone, wide plank",
+      color: `repeating-linear-gradient(
+        90deg,
+        #C8A97E 0px, #C8A97E 2px,
+        #BF9E72 2px, #BF9E72 18px,
+        #C8A97E 18px, #C8A97E 20px,
+        #D4B48C 20px, #D4B48C 36px,
+        #C2996A 36px, #C2996A 38px,
+        #C8A97E 38px, #C8A97E 60px
+      )`,
+      isGradient: true,
+    },
+    {
+      id: "dark_wood",
+      label: "Dark Walnut",
+      desc: "Deep rich grain, dramatic contrast",
+      color: `repeating-linear-gradient(
+        90deg,
+        #3D2610 0px, #3D2610 2px,
+        #4A3020 2px, #4A3020 16px,
+        #3A2210 16px, #3A2210 18px,
+        #52381A 18px, #52381A 32px,
+        #3D2610 32px, #3D2610 34px,
+        #45281A 34px, #45281A 60px
+      )`,
+      isGradient: true,
+    },
+    {
+      id: "marble_white",
+      label: "White Marble",
+      desc: "Carrara-style, polished finish",
+      color: `
+        linear-gradient(105deg, transparent 40%, rgba(180,175,170,0.15) 40%, rgba(180,175,170,0.15) 41%, transparent 41%),
+        linear-gradient(95deg, transparent 55%, rgba(160,155,150,0.1) 55%, rgba(160,155,150,0.1) 56%, transparent 56%),
+        linear-gradient(115deg, transparent 30%, rgba(190,185,180,0.12) 30%, rgba(190,185,180,0.12) 31%, transparent 31%),
+        linear-gradient(100deg, transparent 65%, rgba(170,165,160,0.08) 65%, rgba(170,165,160,0.08) 66%, transparent 66%),
+        #F0EDE8
+      `,
+      isGradient: true,
+    },
+  ],
+},
   wall_paint: {
     label: "Wall Colour",
     zh: "牆身顏色",
@@ -97,11 +136,9 @@ const STYLE_ITEMS = {
       scope === "full" ||
       (scope === "partial" && rooms.some(r => ["living_room", "master_bedroom", "bedroom"].includes(r))),
     options: [
-      { id: "warm_white", label: "Warm White", desc: "Soft off-white, timeless base", color: "#F5F0E8" },
-      { id: "sage_green", label: "Sage Green", desc: "Muted botanical, calming", color: "#8FA888" },
-      { id: "charcoal", label: "Charcoal", desc: "Deep slate, bold statement", color: "#3C3C3C" },
-      { id: "sand_beige", label: "Sand Beige", desc: "Earthy neutral, warm depth", color: "#C4B49A" },
-      { id: "dusty_blue", label: "Dusty Blue", desc: "Soft coastal, serene", color: "#7E9CAF" },
+      { id: "warm_white", label: "Warm White", desc: "Soft off-white, the most versatile base", color: "#F5F0E8" },
+      { id: "greige", label: "Greige", desc: "Grey-beige, the modern HK standard", color: "#C4B8A8" },
+      { id: "light_grey", label: "Light Grey", desc: "Cool neutral, clean and contemporary", color: "#b4b3b3" },
     ],
   },
   kitchen_cabinet: {
@@ -112,10 +149,9 @@ const STYLE_ITEMS = {
       scope === "kitchen_only" ||
       (scope === "partial" && rooms.includes("kitchen")),
     options: [
-      { id: "matte_white", label: "Matte White", desc: "Clean, minimal, timeless", color: "#EFEFEF" },
-      { id: "wood_veneer", label: "Wood Veneer", desc: "Natural grain, warm luxury", color: "#B8895A" },
-      { id: "slate_grey", label: "Slate Grey", desc: "Modern industrial tone", color: "#6B6B6B" },
-      { id: "navy_blue", label: "Navy Blue", desc: "Bold, sophisticated contrast", color: "#2C3E6B" },
+      { id: "matte_white", label: "Matte White", desc: "Clean lacquer, timeless and bright", color: "#EFEFEF" },
+      { id: "light_veneer", label: "Light Oak Veneer", desc: "Natural grain, warm Japandi feel", color: "repeating-linear-gradient(90deg, #C8A97E 0px, #C8A97E 1px, #BF9E72 1px, #BF9E72 12px, #C8A97E 12px, #C8A97E 14px, #D4B48C 14px, #D4B48C 26px)", isGradient: true },
+      { id: "cement_grey", label: "Cement Grey", desc: "Matte stone finish, European modern", color: "#9B9B9B" },
     ],
   },
   bathroom_tile: {
@@ -127,20 +163,8 @@ const STYLE_ITEMS = {
       (scope === "partial" && rooms.includes("bathroom")),
     options: [
       { id: "metro_white", label: "Metro White", desc: "Classic subway tile, clean lines", color: "#F2F2F2" },
-      { id: "terrazzo", label: "Terrazzo", desc: "Speckled stone composite, playful luxury", color: "#D4C9BC" },
       { id: "black_hex", label: "Black Hexagon", desc: "Matte black mosaic, bold floor", color: "#222222" },
       { id: "travertine", label: "Travertine", desc: "Natural stone texture, warm organic", color: "#C9B49A" },
-    ],
-  },
-  door_type: {
-    label: "Door Type",
-    zh: "門款",
-    showFor: (scope) => scope === "full",
-    options: [
-      { id: "solid_wood", label: "Solid Timber", desc: "Full wood panel, premium acoustic", color: "#8B6343" },
-      { id: "flush_white", label: "Flush White", desc: "Seamless painted finish, minimal", color: "#F0F0F0" },
-      { id: "glass_panel", label: "Glass Panel", desc: "Frosted insert, light and open", color: "#C8D8E0" },
-      { id: "dark_veneer", label: "Dark Veneer", desc: "Smoked oak wrap, sophisticated", color: "#3D2B1F" },
     ],
   },
   bedroom_style: {
@@ -150,10 +174,10 @@ const STYLE_ITEMS = {
       scope === "full" ||
       (scope === "partial" && rooms.some(r => ["master_bedroom", "bedroom"].includes(r))),
     options: [
-      { id: "japandi", label: "Japandi", desc: "Low frame, warm wood, paper lighting", color: "#C4AF95" },
-      { id: "modern_minimal", label: "Modern Minimal", desc: "Platform bed, recessed lighting, no clutter", color: "#D8D8D8" },
-      { id: "dark_luxe", label: "Dark Luxe", desc: "Upholstered headboard, moody ambient", color: "#2A2A35" },
-      { id: "scandinavian", label: "Scandinavian", desc: "White frame, linen, pendant warmth", color: "#EAE4DA" },
+      { id: "japandi", label: "Japandi", desc: "Low frame, warm wood, paper lighting", color: "linear-gradient(180deg, #C4AF95 60%, #8B7355 60%)", isGradient: true },
+      { id: "modern_minimal", label: "Modern Minimal", desc: "Platform bed, recessed lighting, no clutter", color: "linear-gradient(180deg, #D8D8D8 60%, #EFEFEF 60%)", isGradient: true },
+      { id: "dark_luxe", label: "Dark Luxe", desc: "Upholstered headboard, moody ambient", color: "linear-gradient(180deg, #2A2A35 60%, #1A1A22 60%)", isGradient: true },
+      { id: "scandinavian", label: "Scandinavian", desc: "White frame, linen, pendant warmth", color: "linear-gradient(180deg, #EAE4DA 60%, #D4C9B8 60%)", isGradient: true },
     ],
   },
 };
@@ -1068,7 +1092,13 @@ async function handleSubmit() {
                   </div>
 
                   {/* Option cards */}
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px" }}>
+                  <div style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${item.options.length}, 1fr)`,
+                    gap: "12px",
+                    maxWidth: item.options.length === 4 ? "880px" : "660px",
+                    margin: "0 auto",
+                  }}>
                     {item.options.map((opt) => {
                       const isSelected = step3Style[key] === opt.id;
                       return (
@@ -1077,7 +1107,7 @@ async function handleSubmit() {
                           type="button"
                           onClick={() => setStep3Style({ ...step3Style, [key]: opt.id })}
                           style={{
-                            background: "transparent",
+                            background: BG_PANEL,
                             border: isSelected ? `1.5px solid ${GOLD}` : "1.5px solid rgba(255,255,255,0.08)",
                             cursor: "pointer",
                             fontFamily: "inherit",
@@ -1085,6 +1115,8 @@ async function handleSubmit() {
                             overflow: "hidden",
                             textAlign: "left",
                             transition: "border 0.15s ease",
+                            display: "flex",
+                            flexDirection: "column",
                           }}
                         >
                           {/* Colour swatch */}
@@ -1092,8 +1124,12 @@ async function handleSubmit() {
                             width: "100%",
                             height: "80px",
                             background: opt.color,
+                            backgroundSize: opt.isGradient
+                              ? (opt.id === "light_wood" || opt.id === "dark_wood" || opt.id === "light_veneer" ? "60px 100%" : "100% 100%")
+                              : undefined,
                             borderBottom: isSelected ? `1px solid ${GOLD}` : "1px solid rgba(255,255,255,0.06)",
                             position: "relative",
+                            flexShrink: 0,
                           }}>
                             {isSelected && (
                               <div style={{
@@ -1116,6 +1152,8 @@ async function handleSubmit() {
                           <div style={{
                             padding: "12px 14px",
                             background: isSelected ? "rgba(212,160,23,0.06)" : BG_PANEL,
+                            borderTop: isSelected ? `1px solid rgba(212,160,23,0.15)` : "none",
+                            marginTop: "-1px",
                           }}>
                             <p style={{
                               fontSize: "13px",
