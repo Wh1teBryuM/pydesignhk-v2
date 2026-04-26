@@ -23,9 +23,31 @@ export default function HomePage() {
     .hero-h1   { animation: pyFadeUp 0.9s 0.4s  cubic-bezier(0.22,1,0.36,1) both; }
     .hero-sub  { animation: pyFadeUp 0.8s 0.7s  cubic-bezier(0.22,1,0.36,1) both; }
     .hero-btns { animation: pyFadeUp 0.7s 0.95s cubic-bezier(0.22,1,0.36,1) both; }
+
+    .py-animate { opacity: 0; transform: translateY(40px); }
+    .py-animate.visible { animation: pyFadeUp 0.8s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .anim-delay-2.visible { animation-delay: 0.4s; }
   `;
   document.head.appendChild(style);
-  return () => document.head.removeChild(style);
+
+  const els = document.querySelectorAll(".py-animate");
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add("visible");
+          observer.unobserve(e.target);
+        }
+      });
+    },
+    { threshold: 0.12 }
+  );
+  els.forEach((el) => observer.observe(el));
+
+  return () => {
+    document.head.removeChild(style);
+    observer.disconnect();
+  };
 }, []);
   
   return (
@@ -55,7 +77,7 @@ export default function HomePage() {
 
       {/* Section 2 — Feature Cards */}
     <section style={styles.featureSection}>
-    <div style={styles.featureCard}>
+    <div className="py-animate anim-fade-up" style={styles.featureCard}>
         <div style={styles.featureCardText}>
         <h3 style={styles.featureTitle}>Precision Cost Estimator</h3>
         <p style={styles.featureText}>
@@ -68,7 +90,7 @@ export default function HomePage() {
 
     <div style={styles.featureDivider} />
 
-    <div style={styles.featureCard}>
+    <div className="py-animate anim-fade-up anim-delay-2" style={styles.featureCard}>
         <div style={styles.featureCardText}>
         <h3 style={styles.featureTitle}>Live Project Tracking</h3>
         <p style={styles.featureText}>
