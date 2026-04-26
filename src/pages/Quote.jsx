@@ -20,35 +20,31 @@ const HK_DISTRICTS = [
 const PRIORITY_PROFILES = [
   {
     id: "look_good_control_cost",
-    zh: "精緻外觀，善用預算",
     en: "Refined finish, smart allocation",
     desc: "Premium on every visible surface. Structural works to specification.",
   },
   {
     id: "practical_functional",
-    zh: "經久耐用，功能優先",
     en: "Engineered to endure",
     desc: "Best-in-class materials and systems. Timeless over trendy.",
   },
   {
     id: "full_premium",
-    zh: "全面精緻，不設上限",
     en: "Full premium, no compromise",
     desc: "No compromise anywhere. Premium throughout.",
   },
   {
     id: "quality_first",
-    zh: "質量至上，設計跟隨結構",
     en: "Structure leads, design follows",
     desc: "Engineering excellence first. Aesthetics built on a flawless foundation.",
   },
 ];
 
 const PROPERTY_TYPES = [
-  { id: "private_flat", label: "Private Flat 私人住宅" },
-  { id: "luxury_flat", label: "Luxury / Serviced Apartment 豪宅／服務式住宅" },
-  { id: "detached_house", label: "Detached House 獨立屋" },
-  { id: "penthouse", label: "Penthouse 頂層複式" },
+  { id: "private_flat", label: "Private Flat" },
+  { id: "luxury_flat", label: "Luxury / Serviced Apartment" },
+  { id: "detached_house", label: "Detached House" },
+  { id: "penthouse", label: "Penthouse" },
 ];
 
 const BUILDING_AGES = [
@@ -81,7 +77,6 @@ const SITE_MULTIPLIERS = {
 const STYLE_ITEMS = {
   flooring: {
   label: "Flooring Style",
-  zh: "地板風格",
   showFor: () => true,
   options: [
     {
@@ -131,7 +126,6 @@ const STYLE_ITEMS = {
 },
   wall_paint: {
     label: "Wall Colour",
-    zh: "牆身顏色",
     showFor: (scope, rooms) =>
       scope === "full" ||
       (scope === "partial" && rooms.some(r => ["living_room", "master_bedroom", "bedroom"].includes(r))),
@@ -143,7 +137,6 @@ const STYLE_ITEMS = {
   },
   kitchen_cabinet: {
     label: "Kitchen Cabinet Finish",
-    zh: "廚櫃飾面",
     showFor: (scope, rooms) =>
       scope === "full" ||
       scope === "kitchen_only" ||
@@ -156,7 +149,6 @@ const STYLE_ITEMS = {
   },
   bathroom_tile: {
     label: "Bathroom Tile Style",
-    zh: "浴室磚款",
     showFor: (scope, rooms) =>
       scope === "full" ||
       scope === "bathroom_only" ||
@@ -169,7 +161,6 @@ const STYLE_ITEMS = {
   },
   bedroom_style: {
     label: "Bedroom Style",
-    zh: "睡房風格",
     showFor: (scope, rooms) =>
       scope === "full" ||
       (scope === "partial" && rooms.some(r => ["master_bedroom", "bedroom"].includes(r))),
@@ -235,14 +226,14 @@ function calculateBOQ(step1, step2, step3) {
 }
 
 const ZONES = [
-  { id: "demolition", name: "Demolition", zh: "清拆", desc: "Structural removal, hacking, debris clearance", structural: false },
-  { id: "plumbing_electrical", name: "Plumbing & Electrical", zh: "水電", desc: "Pipes, wiring, fixtures, sockets, switches", structural: true },
-  { id: "masonry_tiling", name: "Masonry & Tiling", zh: "泥水", desc: "Floor and wall tiles, screeding, waterproofing", structural: false },
-  { id: "painting", name: "Painting", zh: "油漆", desc: "Walls, ceilings, feature walls", structural: false },
-  { id: "carpentry", name: "Carpentry", zh: "木器", desc: "Built-in wardrobes, feature walls, shelving", structural: false },
-  { id: "aluminium", name: "Aluminium Works", zh: "鋁質", desc: "Windows, grilles, sliding doors, frames", structural: true },
-  { id: "cabinets", name: "Cabinets", zh: "櫥櫃", desc: "Kitchen and bathroom cabinet units", structural: false },
-  { id: "miscellaneous", name: "Miscellaneous", zh: "其他", desc: "Sundries, protection, clean-up", structural: false },
+  { id: "demolition", name: "Demolition", desc: "Structural removal, hacking, debris clearance", structural: false },
+  { id: "plumbing_electrical", name: "Plumbing & Electrical", desc: "Pipes, wiring, fixtures, sockets, switches", structural: true },
+  { id: "masonry_tiling", name: "Masonry & Tiling", desc: "Floor and wall tiles, screeding, waterproofing", structural: false },
+  { id: "painting", name: "Painting", desc: "Walls, ceilings, feature walls", structural: false },
+  { id: "carpentry", name: "Carpentry", desc: "Built-in wardrobes, feature walls, shelving", structural: false },
+  { id: "aluminium", name: "Aluminium Works", desc: "Windows, grilles, sliding doors, frames", structural: true },
+  { id: "cabinets", name: "Cabinets", desc: "Kitchen and bathroom cabinet units", structural: false },
+  { id: "miscellaneous", name: "Miscellaneous", desc: "Sundries, protection, clean-up", structural: false },
 ];
 
 const SCOPE_ZONE_MAP = {
@@ -943,9 +934,9 @@ async function handleSubmit() {
         {currentStep === 3 && step3 !== null && (() => {
   const activeZones = getActiveZones(step2);
   const gradeLabels = {
-    basic:    { label: "Basic",    zh: "基本", multiplier: "1.0×", desc: "Standard local materials, functional finish" },
-    standard: { label: "Standard", zh: "中級", multiplier: "1.25×", desc: "Mid-range materials, improved durability and finish" },
-    premium:  { label: "Premium",  zh: "優質", multiplier: "1.6×",  desc: "High-end imported materials, superior longevity" },
+    basic:    { label: "Basic",    multiplier: "1.0×", desc: "Standard local materials, functional finish" },
+    standard: { label: "Standard", multiplier: "1.25×", desc: "Mid-range materials, improved durability and finish" },
+    premium:  { label: "Premium",  multiplier: "1.6×",  desc: "High-end imported materials, superior longevity" },
   };
   const priorityNote = {
     look_good_control_cost: "Visible zones defaulted to Standard, hidden works to Basic — adjust freely.",
@@ -1214,7 +1205,7 @@ async function handleSubmit() {
                 <div style={styles.sectionBody}>
                   <h2 style={styles.sectionTitle}>Additional Requirements</h2>
                   <p style={styles.sectionSub}>
-                    Anything not covered in the previous steps — special requests, constraints, or preferences. This will be passed directly to Eric before the site visit.
+                    Anything not covered in the previous steps — special requests, constraints, or preferences. This will be passed directly to our person-in-charge before the site visit.
                   </p>
   
                   <div style={styles.fieldGroup}>
@@ -1229,7 +1220,7 @@ async function handleSubmit() {
                       rows={6}
                     />
                     <p style={styles.fieldHint}>
-                      No requirement is too small. Eric reviews every note before the consultation.
+                      No requirement is too small. PYDesignHK reviews every note before the consultation.
                     </p>
                   </div>
                 </div>
@@ -1266,7 +1257,7 @@ async function handleSubmit() {
                 <div style={styles.sectionBody}>
                   <h2 style={styles.sectionTitle}>Your Estimate</h2>
                   <p style={styles.sectionSub}>
-                    Indicative figures based on your selected material grades and site conditions. Final pricing is confirmed after Eric's site visit.
+                    Indicative figures based on your selected material grades and site conditions. Final pricing is confirmed after site visit.
                   </p>
  
                   {/* BOQ table */}
@@ -1364,11 +1355,11 @@ async function handleSubmit() {
                 <div style={styles.confirmIcon}>✦</div>
                 <h2 style={styles.confirmTitle}>Inquiry Received</h2>
                 <p style={styles.confirmSub}>
-                  Thank you, {step6.fullName}. Eric will review your project details and reach out to you shortly.
+                  Thank you, {step6.fullName}. We will review your project details and reach out to you shortly.
                 </p>
                 <div style={styles.confirmDivider} />
                 <p style={styles.confirmNote}>
-                  If you have any urgent questions, you can reach Eric directly on WhatsApp.
+                  If you have any urgent questions, you can reach us directly on WhatsApp.
                 </p>
                 <a
                   href="https://wa.me/85293918235"
@@ -1379,7 +1370,7 @@ async function handleSubmit() {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                   </svg>
-                  Chat with Eric on WhatsApp
+                  Chat with PYDESIGNHK on WhatsApp
                 </a>
                 <button
                   style={styles.backHomeBtn}
@@ -1397,7 +1388,7 @@ async function handleSubmit() {
                   <div style={styles.sectionBody}>
                     <h2 style={styles.sectionTitle}>Get in Touch</h2>
                     <p style={styles.sectionSub}>
-                      Leave your contact details. Eric will review your project and reach out to arrange a site visit.
+                      Leave your contact details. We will review your project and reach out to arrange a site visit.
                     </p>
  
                     {/* Full Name */}

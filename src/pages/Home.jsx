@@ -44,6 +44,14 @@ export default function HomePage() {
   );
   els.forEach((el) => observer.observe(el));
 
+  const params = new URLSearchParams(window.location.search)
+  if (params.get("scrollTo") === "mission") {
+    setTimeout(() => {
+      document.getElementById("mission")?.scrollIntoView({ behavior: "smooth" })
+    }, 100)
+  }
+
+
   return () => {
     document.head.removeChild(style);
     observer.disconnect();
@@ -116,7 +124,7 @@ export default function HomePage() {
             our exclusive client portal.
         </p>
         </div>
-        <a href="/login" style={styles.featureLink}>TRACK YOUR OWN PROJECT →</a>
+        <a href="/track-project" style={styles.featureLink}>TRACK YOUR OWN PROJECT →</a>
     </div>
     </section>
 
@@ -159,7 +167,7 @@ export default function HomePage() {
       </section>
 
       {/* Section 4 — Mission */}
-      <section style={styles.missionSection}>
+      <section id="mission" style={styles.missionSection}>
         <div style={styles.missionImage} />
         <div style={styles.missionContent}>
           <p style={styles.missionTag}>OUR MISSION</p>

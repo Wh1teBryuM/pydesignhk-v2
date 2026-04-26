@@ -7,7 +7,7 @@ const TEXT_DIM = "rgba(255,255,255,0.65)"
 
 const NAV_LINKS = [
   { label: "Home", path: "/" },
-  { label: "Services", path: "#" },
+  { label: "Our Mission", path: "services" },  // ← change "#" to "services"
   { label: "Cost Estimator", path: "/quote" },
   { label: "Project Tracker", path: "/track-project" },
 ]
@@ -62,8 +62,14 @@ export default function Navbar() {
                 paddingBottom: isActive ? "2px" : "0",
               }}
               onClick={(e) => {
-                if (link.path !== "#") {
-                  e.preventDefault()
+                e.preventDefault()
+                if (link.path === "services") {
+                  if (location.pathname === "/") {
+                    document.getElementById("mission")?.scrollIntoView({ behavior: "smooth" })
+                  } else {
+                    navigate("/?scrollTo=mission")
+                  }
+                } else {
                   navigate(link.path)
                 }
               }}
