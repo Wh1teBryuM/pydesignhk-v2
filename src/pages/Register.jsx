@@ -34,7 +34,7 @@ export default function RegisterPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch("http://https://pydesignhk-backend.onrender.com/auth/register", {
+      const res = await fetch("https://pydesignhk-backend.onrender.com/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ full_name: fullName, email, password }),

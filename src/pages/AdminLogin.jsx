@@ -25,7 +25,7 @@ export default function AdminLogin() {
     setError("")
 
     try {
-      const res = await fetch("http://https://pydesignhk-backend.onrender.com/admin/login", {
+      const res = await fetch("https://pydesignhk-backend.onrender.com/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

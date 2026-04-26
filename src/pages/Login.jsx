@@ -34,7 +34,7 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("http://https://pydesignhk-backend.onrender.com/auth/login", {
+      const res = await fetch("https://pydesignhk-backend.onrender.com/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

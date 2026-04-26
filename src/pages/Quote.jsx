@@ -417,7 +417,7 @@ async function handleSubmit() {
       inquiry_notes:            step6.inquiryNotes,
     };
  
-    const res = await fetch("http://https://pydesignhk-backend.onrender.com/quote/submit", {
+    const res = await fetch("https://pydesignhk-backend.onrender.com/quote/submit", {
       method:  "POST",
       headers: {
         "Content-Type":  "application/json",
