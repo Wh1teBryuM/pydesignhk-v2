@@ -1638,7 +1638,7 @@ const styles = {
     gap: "48px",
   },
   sectionLabel: {
-    fontSize: "11px",
+    fontSize: "16px",
     letterSpacing: "0.2em",
     color: "rgba(212,160,23,0.4)",
     fontWeight: "600",
