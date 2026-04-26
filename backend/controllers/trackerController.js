@@ -157,11 +157,30 @@ const updatePhase = async (req, res) => {
     const { id } = req.params
     const { phase_name, status, expected_completion_date } = req.body
 
-    const { error } = await supabase
+    // Update the phase
+    const { data: phase, error } = await supabase
       .from('tracker_phases')
       .update({ phase_name, status, expected_completion_date })
       .eq('id', id)
+      .select('project_id')
+      .single()
     if (error) throw error
+
+    // Check if all phases for this project are completed
+    const { data: allPhases, error: phasesError } = await supabase
+      .from('tracker_phases')
+      .select('status')
+      .eq('project_id', phase.project_id)
+    if (phasesError) throw phasesError
+
+    const allDone = allPhases.every(p => p.status === 'completed')
+
+    if (allDone) {
+      await supabase
+        .from('tracker_projects')
+        .update({ status: 'completed' })
+        .eq('id', phase.project_id)
+    }
 
     res.json({ message: 'Phase updated' })
   } catch (err) {

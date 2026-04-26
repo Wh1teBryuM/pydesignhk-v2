@@ -260,6 +260,28 @@ function TrackerTab({ adminToken }) {
                     <p style={{ ...styles.expandedValue, color: "#fff" }}>{item.value}</p>
                   </div>
                 ))}
+
+                <div>
+                  <p style={styles.expandedLabel}>PROJECT STATUS</p>
+                  <select
+                    value={proj.status}
+                    onChange={async (e) => {
+                      const token = localStorage.getItem("adminToken")
+                      await fetch(`http://localhost:3001/tracker/admin/projects/${proj.id}`, {
+                        method: "PATCH",
+                        headers: { authorization: token, "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: e.target.value }),
+                      })
+                      fetchProjects()
+                    }}
+                    style={{ background: BG_PANEL, border: `1px solid ${BORDER}`, color: GOLD, padding: "6px 10px", fontSize: "12px", fontFamily: "inherit", cursor: "pointer" }}
+                  >
+                    <option value="confirmed">Confirmed</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="cancelled">Cancelled</option>
+                  </select>
+                </div>
               </div>
 
               <p style={{ ...styles.expandedLabel, marginBottom: "16px" }}>PHASES</p>
