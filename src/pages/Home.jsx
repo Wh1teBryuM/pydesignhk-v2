@@ -78,7 +78,7 @@ export default function HomePage() {
             onMouseLeave={e => {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = "none";
-            }}>START CONSULTATION</button>
+            }} onClick={() => navigate('/quote')}>START COST ESTIMATE</button>
             <button 
             style={styles.heroBtnOutline}
             onMouseEnter={e => {
@@ -88,7 +88,7 @@ export default function HomePage() {
             onMouseLeave={e => {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = "none";
-            }}>VIEW PORTFOLIO</button>
+            }} onClick={() => navigate('/track-project')}>VIEW PORTFOLIO</button>
           </div>
         </div>
       </section>
@@ -222,8 +222,7 @@ export default function HomePage() {
               e.currentTarget.style.transform = "translateY(0)";
               e.currentTarget.style.boxShadow = "none";
             }}
-          >REQUEST PROPOSAL</button>
-          <a href="#" style={styles.ctaBtnText}>Download Brochure (PDF)</a>
+          onClick={() => navigate('/quote')}>REQUEST COST ESTIMATE</button>
         </div>
       </section>
 
