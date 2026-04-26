@@ -69,8 +69,26 @@ export default function HomePage() {
             permanence with the warmth of high-end design.
           </p>
           <div className="hero-btns" style={styles.heroBtns}>
-            <button style={styles.heroBtnPrimary}>START CONSULTATION</button>
-            <button style={styles.heroBtnOutline}>VIEW PORTFOLIO</button>
+            <button 
+            style={styles.heroBtnPrimary}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(212,160,23,0.25)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}>START CONSULTATION</button>
+            <button 
+            style={styles.heroBtnOutline}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(212,160,23,0.25)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}>VIEW PORTFOLIO</button>
           </div>
         </div>
       </section>
@@ -194,7 +212,17 @@ export default function HomePage() {
           Schedule a private site visit or studio consultation today.
         </p>
         <div style={styles.ctaBtns}>
-          <button style={styles.ctaBtnPrimary}>REQUEST PROPOSAL</button>
+          <button
+            style={styles.ctaBtnPrimary}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 8px 24px rgba(212,160,23,0.25)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >REQUEST PROPOSAL</button>
           <a href="#" style={styles.ctaBtnText}>Download Brochure (PDF)</a>
         </div>
       </section>
@@ -310,6 +338,7 @@ const styles = {
     fontWeight: "600",
     cursor: "pointer",
     fontFamily: "inherit",
+    transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease",
   },
   heroBtnOutline: {
     background: "transparent",
@@ -320,6 +349,7 @@ const styles = {
     letterSpacing: "0.12em",
     cursor: "pointer",
     fontFamily: "inherit",
+    transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease",
   },
 
   // Features
@@ -520,6 +550,7 @@ missionContent: {
     gap: "24px",
     justifyContent: "center",
     alignItems: "center",
+    transition: "transform 0.5s cubic-bezier(0.22,1,0.36,1), box-shadow 0.5s ease",
   },
   ctaBtnPrimary: {
     background: GOLD,
