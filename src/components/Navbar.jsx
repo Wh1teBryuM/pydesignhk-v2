@@ -25,7 +25,7 @@ export default function Navbar() {
   const handleAuthBtn = async () => {
     if (isLoggedIn) {
       const token = localStorage.getItem("token")
-      await fetch("http://https://pydesignhk-backend.onrender.com/auth/logout", {
+      await fetch("https://pydesignhk-backend.onrender.com/auth/logout", {
         method: "POST",
         headers: { Authorization: token },
       })
