@@ -2,12 +2,13 @@ const bcrypt = require('bcrypt')
 const { v4: uuidv4 } = require('uuid')
 const { createClient } = require('@supabase/supabase-js')
 
-const supabase = createClient(
+const getSupabase = () => createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 )
 
 const registerCustomer = async (req, res) => {
+  const supabase = getSupabase()
   try {
     const { full_name, email, password } = req.body
 
@@ -42,6 +43,7 @@ const registerCustomer = async (req, res) => {
 }
 
 const loginCustomer = async (req, res) => {
+  const supabase = getSupabase()
   try {
     const { email, password } = req.body
 
@@ -82,6 +84,7 @@ const loginCustomer = async (req, res) => {
 }
 
 const logoutCustomer = async (req, res) => {
+  const supabase = getSupabase()
   try {
     const token = req.headers['authorization']
 
