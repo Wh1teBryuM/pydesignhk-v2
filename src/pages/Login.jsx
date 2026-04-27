@@ -20,7 +20,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentImage, setCurrentImage] = useState(0);
-  const images = ["/bedroom.png", "/loginimage2.jpg", "/loginimage3.jpg", "/loginimage4.webp"];
+  const images = ["/bedroom.png", "/loginimage2.jpg", "/loginimage3.jpg"];
 
   useEffect(() => {
     const interval = setInterval(() => {
